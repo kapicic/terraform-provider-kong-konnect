@@ -2,9 +2,10 @@ package services
 
 import (
 	"encoding/json"
-	restClient "github.com/liblab-sdk/internal/clients/rest"
-	"github.com/liblab-sdk/internal/clients/rest/httptransport"
-	"github.com/liblab-sdk/pkg/shared"
+
+	restClient "github.com/kong-sdk/internal/clients/rest"
+	"github.com/kong-sdk/internal/clients/rest/httptransport"
+	"github.com/kong-sdk/pkg/shared"
 )
 
 type ApiService struct {

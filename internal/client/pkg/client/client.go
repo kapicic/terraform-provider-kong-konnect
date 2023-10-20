@@ -1,11 +1,11 @@
 package client
 
 import (
-	"github.com/liblab-sdk/pkg/apiproducts"
-	"github.com/liblab-sdk/pkg/apiproductversions"
-	"github.com/liblab-sdk/pkg/routes"
-	"github.com/liblab-sdk/pkg/runtimegroups"
-	"github.com/liblab-sdk/pkg/services"
+	"github.com/kong-sdk/pkg/apiproducts"
+	"github.com/kong-sdk/pkg/apiproductversions"
+	"github.com/kong-sdk/pkg/routes"
+	"github.com/kong-sdk/pkg/runtimegroups"
+	"github.com/kong-sdk/pkg/services"
 )
 
 type Client struct {

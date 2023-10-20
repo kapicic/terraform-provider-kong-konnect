@@ -1,3 +1,3 @@
-module github.com/liblab-sdk
+module github.com/kong-sdk
 
 go 1.18

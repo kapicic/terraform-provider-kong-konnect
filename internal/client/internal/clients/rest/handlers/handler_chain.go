@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/liblab-sdk/internal/clients/rest/httptransport"
+	"github.com/kong-sdk/internal/clients/rest/httptransport"
 )
 
 type Handler interface {

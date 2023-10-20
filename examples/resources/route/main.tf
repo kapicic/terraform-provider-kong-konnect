@@ -1,4 +1,4 @@
-resource "liblab_route" "example" {
+resource "kong_route" "example" {
   created_at = "created_at"
 
   Headers = {

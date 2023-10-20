@@ -3,7 +3,7 @@ package handlers
 import (
 	"errors"
 
-	"github.com/liblab-sdk/internal/clients/rest/httptransport"
+	"github.com/kong-sdk/internal/clients/rest/httptransport"
 )
 
 type DefaultHeadersHandler struct {
@@ -13,7 +13,7 @@ type DefaultHeadersHandler struct {
 
 func NewDefaultHeadersHandler() *DefaultHeadersHandler {
 	defaultHeaders := map[string]string{
-		"User-Agent":   "liblab/0.0.2 go/1.18",
+		"User-Agent":   "kong/0.0.2 go/1.18",
 		"Content-type": "application/json",
 	}
 

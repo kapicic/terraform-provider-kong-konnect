@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/liblab-sdk/pkg/client"
+	"github.com/kong-sdk/pkg/client"
 )
 
 func main() {
-	client := client.NewClient("https://api-dev.liblab.com")
+	client := client.NewClient("https://api-dev.kong.com")
 
 	fmt.Printf("%#v", client)
 }

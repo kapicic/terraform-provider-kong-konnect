@@ -3,14 +3,15 @@ package service
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/liblab-sdk/pkg/client"
-	"github.com/liblab-sdk/pkg/services"
-	"github.com/liblab-sdk/pkg/shared"
-	"github.com/liblab/internal/provider/service/models/client_certificate"
+	"github.com/kong-sdk/pkg/client"
+	"github.com/kong-sdk/pkg/services"
+	"github.com/kong-sdk/pkg/shared"
+	"github.com/kong/internal/provider/service/models/client_certificate"
 )
 
 // ensure we implement the needed interfaces

@@ -2,23 +2,24 @@ package provider
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/liblab-sdk/pkg/client"
+	"github.com/kong-sdk/pkg/client"
 
-	"github.com/liblab/internal/provider/route"
+	"github.com/kong/internal/provider/route"
 
-	"github.com/liblab/internal/provider/service"
+	"github.com/kong/internal/provider/service"
 
-	"github.com/liblab/internal/provider/apiproduct"
+	"github.com/kong/internal/provider/apiproduct"
 
-	"github.com/liblab/internal/provider/apiproductversion"
+	"github.com/kong/internal/provider/apiproductversion"
 
-	"github.com/liblab/internal/provider/runtimegroup"
+	"github.com/kong/internal/provider/runtimegroup"
 )
 
 // Ensure Provider satisfies various provider interfaces.
@@ -28,14 +29,14 @@ type Provider struct {
 	version string
 }
 
-type liblabProviderModel struct {
+type kongProviderModel struct {
 	Host types.String `tfsdk:"host"`
 
 	VerifyTls types.Bool `tfsdk:"verifytls"`
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "liblab"
+	resp.TypeName = "kong"
 	resp.Version = "1.0.0"
 }
 
@@ -57,7 +58,7 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 }
 
 func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data liblabProviderModel
+	var data kongProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
