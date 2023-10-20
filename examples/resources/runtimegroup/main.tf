@@ -1,4 +1,4 @@
-resource "liblab_runtime_group" "example" {
+resource "kong_runtime_group" "example" {
   id = "id"
 
   name = "name"

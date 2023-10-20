@@ -1,9 +1,9 @@
 package rest
 
 import (
-	"github.com/liblab-sdk/internal/clients/rest/handlers"
-	"github.com/liblab-sdk/internal/clients/rest/hooks"
-	"github.com/liblab-sdk/internal/clients/rest/httptransport"
+	"github.com/kong-sdk/internal/clients/rest/handlers"
+	"github.com/kong-sdk/internal/clients/rest/hooks"
+	"github.com/kong-sdk/internal/clients/rest/httptransport"
 )
 
 type RestClient struct {

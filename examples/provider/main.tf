@@ -1,12 +1,12 @@
 terraform {
   required_providers {
-    liblab = {
-      source = "hashicorp/liblab"
+    kong = {
+      source = "hashicorp/kong"
     }
   }
 }
 
-provider "liblab" {
+provider "kong" {
 
   host = "http://localhost:8001/"
 

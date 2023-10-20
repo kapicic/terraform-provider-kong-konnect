@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/liblab-sdk/internal/utils"
+	"github.com/kong-sdk/internal/utils"
 )
 
 type Request struct {

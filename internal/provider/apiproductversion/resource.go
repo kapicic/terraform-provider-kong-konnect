@@ -3,14 +3,15 @@ package apiproductversion
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/liblab-sdk/pkg/apiproductversions"
-	"github.com/liblab-sdk/pkg/client"
-	"github.com/liblab-sdk/pkg/shared"
-	"github.com/liblab/internal/provider/apiproductversion/models/gateway_service_payload"
+	"github.com/kong-sdk/pkg/apiproductversions"
+	"github.com/kong-sdk/pkg/client"
+	"github.com/kong-sdk/pkg/shared"
+	"github.com/kong/internal/provider/apiproductversion/models/gateway_service_payload"
 )
 
 // ensure we implement the needed interfaces

@@ -3,14 +3,15 @@ package runtimegroup
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/liblab-sdk/pkg/client"
-	"github.com/liblab-sdk/pkg/runtimegroups"
-	"github.com/liblab-sdk/pkg/shared"
-	"github.com/liblab/internal/provider/runtimegroup/models/config"
+	"github.com/kong-sdk/pkg/client"
+	"github.com/kong-sdk/pkg/runtimegroups"
+	"github.com/kong-sdk/pkg/shared"
+	"github.com/kong/internal/provider/runtimegroup/models/config"
 )
 
 // ensure we implement the needed interfaces

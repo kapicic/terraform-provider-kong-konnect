@@ -3,14 +3,15 @@ package apiproduct
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/liblab-sdk/pkg/apiproducts"
-	"github.com/liblab-sdk/pkg/client"
-	"github.com/liblab-sdk/pkg/shared"
+	"github.com/kong-sdk/pkg/apiproducts"
+	"github.com/kong-sdk/pkg/client"
+	"github.com/kong-sdk/pkg/shared"
 )
 
 // ensure we implement the needed interfaces

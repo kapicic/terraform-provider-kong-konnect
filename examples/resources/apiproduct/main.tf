@@ -1,4 +1,4 @@
-resource "liblab_api_product" "example" {
+resource "kong_api_product" "example" {
   id = "id"
 
   name = "name"

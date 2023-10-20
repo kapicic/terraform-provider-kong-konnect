@@ -1,11 +1,11 @@
-module github.com/liblab
+module github.com/kong
 
 go 1.19
 
 require (
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
 	github.com/hashicorp/terraform-plugin-framework v1.3.5
-	github.com/liblab-sdk v0.0.0
+	github.com/kong-sdk v0.0.0
 	github.com/stretchr/testify v1.7.2
 )
 
@@ -69,4 +69,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/liblab-sdk => ./internal/client
+replace github.com/kong-sdk => ./internal/client

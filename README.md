@@ -1,43 +1,50 @@
-# LIBLAB Terraform Provider
+# Kong Terraform Provider
+
 The Konnect platform API
-This repository contains a Terraform provider that allows you to manage resources through the LIBLAB API.
+This repository contains a Terraform provider that allows you to manage resources through the KONG API.
 
 ## Prerequisites
 
-   - [Go](https://golang.org/doc/install) <= 1.19
+- [Go](https://golang.org/doc/install) <= 1.19
 
-   - [Terraform](https://www.terraform.io/downloads.html) <= 1.0
+- [Terraform](https://www.terraform.io/downloads.html) <= 1.0
 
-- Access to the LIBLAB API.
+- Access to the KONG API.
 
 ## Installing The Provider
 
 1. Clone the repository:
+
 ```bash
-git clone https://github.com/liblaber/terraform-provider-liblab
+git clone https://github.com/liblaber/terraform-provider-kong
 ```
 
 2. Navigate to the directory:
+
 ```bash
-cd terraform-provider-liblab
+cd terraform-provider-kong
 ```
 
 3. Update module references:
+
 ```bash
 go mod tidy
 ```
 
 4. Build the provider:
+
 ```bash
-go build -o terraform-provider-liblab
+go build -o terraform-provider-kong
 ```
 
 5. Move the provider to your plugins directory:
+
 ```bash
-mkdir -p ~/.terraform.d/plugins/example.com/user/liblab/0.1.0/linux_amd64
-mv terraform-provider-liblab ~/.terraform.d/plugins/example.com/user/liblab/0.1.0/linux_amd64
+mkdir -p ~/.terraform.d/plugins/example.com/user/kong/0.1.0/linux_amd64
+mv terraform-provider-kong ~/.terraform.d/plugins/example.com/user/kong/0.1.0/linux_amd64
 ```
-   Note: The directory structure is important. The provider must be located at `~/.terraform.d/plugins/example.com/user/liblab/0.1.0/linux_amd64/terraform-provider-liblab`
+
+Note: The directory structure is important. The provider must be located at `~/.terraform.d/plugins/example.com/user/kong/0.1.0/linux_amd64/terraform-provider-kong`
 
 ## Setting Up The Provider
 
@@ -46,7 +53,7 @@ mv terraform-provider-liblab ~/.terraform.d/plugins/example.com/user/liblab/0.1.
 In your Terraform configuration, reference the provider and supply the necessary credentials:
 
 ```hcl
-provider "liblab" {
+provider "kong" {
 api_endpoint = "https://localhost/"
 api_token = "YOUR_API_TOKEN"
 }
@@ -87,11 +94,13 @@ Then, run your Terraform commands.
 ## Running Tests
 
 1. Generate the docs:
+
 ```bash
 go generate ./...
 ```
 
 2. To execute the provider's tests:
+
 ```bash
 make testacc
 ```

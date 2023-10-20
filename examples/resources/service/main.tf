@@ -1,4 +1,4 @@
-resource "liblab_service" "example" {
+resource "kong_service" "example" {
   connect_timeout = "connect_timeout"
 
   created_at = "created_at"
