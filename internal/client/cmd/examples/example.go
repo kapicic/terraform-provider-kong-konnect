@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	client := client.NewClient("https://api-dev.kong.com")
+	client := client.NewClient("http://example.com", "TOKEN")
 
 	fmt.Printf("%#v", client)
 }

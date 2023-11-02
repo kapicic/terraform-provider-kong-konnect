@@ -2,7 +2,7 @@ package routes
 
 type Route struct {
 	CreatedAt               *int64    `json:"created_at,omitempty"`
-	Headers                 *any      `json:"headers,omitempty"`
+	Headers                 *Headers  `json:"headers,omitempty"`
 	Hosts                   *[]string `json:"hosts,omitempty"`
 	HttpsRedirectStatusCode *int64    `json:"https_redirect_status_code,omitempty"`
 	Id                      *string   `json:"id,omitempty"`
@@ -26,8 +26,15 @@ func (r *Route) SetCreatedAt(createdAt int64) {
 	r.CreatedAt = &createdAt
 }
 
-func (r *Route) SetHeaders(headers any) {
+func (r *Route) SetHeaders(headers Headers) {
 	r.Headers = &headers
+}
+
+func (r *Route) GetHeaders() *Headers {
+	if r.Headers == nil {
+		return nil
+	}
+	return r.Headers
 }
 
 func (r *Route) SetHosts(hosts []string) {
@@ -103,6 +110,14 @@ func (r *Route) SetTags(tags []string) {
 
 func (r *Route) SetUpdatedAt(updatedAt int64) {
 	r.UpdatedAt = &updatedAt
+}
+
+type Headers struct {
+	Key *string `json:"key,omitempty"`
+}
+
+func (h *Headers) SetKey(key string) {
+	h.Key = &key
 }
 
 type Service struct {

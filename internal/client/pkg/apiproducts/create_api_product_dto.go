@@ -1,9 +1,9 @@
 package apiproducts
 
 type CreateApiProductDto struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Labels      *any    `json:"labels,omitempty"`
+	Name        *string           `json:"name,omitempty"`
+	Description *string           `json:"description,omitempty"`
+	Labels      *ApiProductLabels `json:"labels,omitempty"`
 }
 
 func (c *CreateApiProductDto) SetName(name string) {
@@ -14,6 +14,13 @@ func (c *CreateApiProductDto) SetDescription(description string) {
 	c.Description = &description
 }
 
-func (c *CreateApiProductDto) SetLabels(labels any) {
+func (c *CreateApiProductDto) SetLabels(labels ApiProductLabels) {
 	c.Labels = &labels
+}
+
+func (c *CreateApiProductDto) GetLabels() *ApiProductLabels {
+	if c.Labels == nil {
+		return nil
+	}
+	return c.Labels
 }

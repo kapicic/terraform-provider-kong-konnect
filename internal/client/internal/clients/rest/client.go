@@ -10,13 +10,15 @@ type RestClient struct {
 	handlers *handlers.HandlerChain
 }
 
-func NewRestClient(baseUrl string) *RestClient {
+func NewRestClient(baseUrl string, bearerToken string) *RestClient {
 	defaultHeadersHandler := handlers.NewDefaultHeadersHandler()
+	bearerTokenHandler := handlers.NewBearerTokenHandler(bearerToken)
 	hookHandler := handlers.NewHookHandler(hooks.NewDefaultHook())
 	terminatingHandler := handlers.NewTerminatingHandler()
 
 	handlers := handlers.BuildHandlerChain().
 		AddHandler(defaultHeadersHandler).
+		AddHandler(bearerTokenHandler).
 		AddHandler(hookHandler).
 		AddHandler(terminatingHandler)
 

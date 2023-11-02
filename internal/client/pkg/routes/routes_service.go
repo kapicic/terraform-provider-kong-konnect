@@ -2,25 +2,24 @@ package routes
 
 import (
 	"encoding/json"
-
 	restClient "github.com/kong-sdk/internal/clients/rest"
 	"github.com/kong-sdk/internal/clients/rest/httptransport"
 	"github.com/kong-sdk/pkg/shared"
 )
 
-type ApiService struct {
+type RoutesService struct {
 	client  *restClient.RestClient
 	baseUrl string
 }
 
-func NewApiService(baseUrl string) *ApiService {
-	return &ApiService{
-		client:  restClient.NewRestClient(baseUrl),
+func NewRoutesService(baseUrl string, bearerToken string) *RoutesService {
+	return &RoutesService{
+		client:  restClient.NewRestClient(baseUrl, bearerToken),
 		baseUrl: baseUrl,
 	}
 }
 
-func (api *ApiService) CreateRoute(runtimeGroupId string, route Route, opts shared.RequestOptions) (*Route, error) {
+func (api *RoutesService) CreateRoute(runtimeGroupId string, route Route, opts shared.RequestOptions) (*Route, error) {
 	request := httptransport.NewRequest("POST", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/routes", opts.Headers, opts.QueryParams)
 	request.Body = route
 
@@ -41,7 +40,7 @@ func (api *ApiService) CreateRoute(runtimeGroupId string, route Route, opts shar
 
 }
 
-func (api *ApiService) GetRoute(runtimeGroupId string, routeId string, opts shared.RequestOptions) (*Route, error) {
+func (api *RoutesService) GetRoute(runtimeGroupId string, routeId string, opts shared.RequestOptions) (*Route, error) {
 	request := httptransport.NewRequest("GET", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/routes/{route_id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("runtimeGroupId", runtimeGroupId)
@@ -62,7 +61,7 @@ func (api *ApiService) GetRoute(runtimeGroupId string, routeId string, opts shar
 
 }
 
-func (api *ApiService) UpsertRoute(runtimeGroupId string, routeId string, route Route, opts shared.RequestOptions) (*Route, error) {
+func (api *RoutesService) UpsertRoute(runtimeGroupId string, routeId string, route Route, opts shared.RequestOptions) (*Route, error) {
 	request := httptransport.NewRequest("PUT", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/routes/{route_id}", opts.Headers, opts.QueryParams)
 	request.Body = route
 
@@ -84,7 +83,7 @@ func (api *ApiService) UpsertRoute(runtimeGroupId string, routeId string, route 
 
 }
 
-func (api *ApiService) DeleteRoute(runtimeGroupId string, routeId string, opts shared.RequestOptions) error {
+func (api *RoutesService) DeleteRoute(runtimeGroupId string, routeId string, opts shared.RequestOptions) error {
 	request := httptransport.NewRequest("DELETE", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/routes/{route_id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("runtimeGroupId", runtimeGroupId)

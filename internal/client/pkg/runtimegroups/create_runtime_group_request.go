@@ -5,7 +5,7 @@ type CreateRuntimeGroupRequest struct {
 	Description *string      `json:"description,omitempty"`
 	ClusterType *ClusterType `json:"cluster_type,omitempty"`
 	AuthType    *AuthType    `json:"auth_type,omitempty"`
-	Labels      *any         `json:"labels,omitempty"`
+	Labels      *Labels      `json:"labels,omitempty"`
 }
 
 func (c *CreateRuntimeGroupRequest) SetName(name string) {
@@ -24,8 +24,15 @@ func (c *CreateRuntimeGroupRequest) SetAuthType(authType AuthType) {
 	c.AuthType = &authType
 }
 
-func (c *CreateRuntimeGroupRequest) SetLabels(labels any) {
+func (c *CreateRuntimeGroupRequest) SetLabels(labels Labels) {
 	c.Labels = &labels
+}
+
+func (c *CreateRuntimeGroupRequest) GetLabels() *Labels {
+	if c.Labels == nil {
+		return nil
+	}
+	return c.Labels
 }
 
 type ClusterType string

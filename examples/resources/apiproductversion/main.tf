@@ -1,7 +1,9 @@
 resource "kong_api_product_version" "example" {
-  id = "id"
-
   name = "name"
+
+  publish_status = "publish_status"
+
+  deprecated = false
 
   gateway_service = {
     id               = "id"
@@ -9,15 +11,7 @@ resource "kong_api_product_version" "example" {
   }
 
 
-  publish_status = "publish_status"
-
-  deprecated = true
-
-  created_at = "created_at"
-
-  updated_at = "updated_at"
-
-  notify = true
+  notify = false
 
   api_product_id = "api_product_id"
 

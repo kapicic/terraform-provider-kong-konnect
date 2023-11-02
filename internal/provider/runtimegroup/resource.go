@@ -3,7 +3,6 @@ package runtimegroup
 import (
 	"context"
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -12,48 +11,46 @@ import (
 	"github.com/kong-sdk/pkg/runtimegroups"
 	"github.com/kong-sdk/pkg/shared"
 	"github.com/kong/internal/provider/runtimegroup/models/config"
+	"github.com/kong/internal/provider/runtimegroup/models/labels"
+	"github.com/kong/internal/utils"
 )
 
 // ensure we implement the needed interfaces
-var _ resource.Resource = &RuntimegroupResource{}
-var _ resource.ResourceWithImportState = &RuntimegroupResource{}
+var _ resource.Resource = &RunTimeGroupResource{}
+var _ resource.ResourceWithImportState = &RunTimeGroupResource{}
 
 // constructor
-func NewRuntimegroupResource() resource.Resource {
-	return &RuntimegroupResource{}
+func NewRunTimeGroupResource() resource.Resource {
+	return &RunTimeGroupResource{}
 }
 
 // client wrapper
-type RuntimegroupResource struct {
+type RunTimeGroupResource struct {
 	client *client.Client
 }
 
-type RuntimegroupResourceModel struct {
-	Id          types.String  `tfsdk:"id"`
-	Name        types.String  `tfsdk:"name"`
-	Description types.String  `tfsdk:"description"`
-	Config      config.Config `tfsdk:"config"`
-	CreatedAt   types.String  `tfsdk:"created_at"`
-	UpdatedAt   types.String  `tfsdk:"updated_at"`
-	ClusterType types.String  `tfsdk:"cluster_type"`
-	AuthType    types.String  `tfsdk:"auth_type"`
+type RunTimeGroupResourceModel struct {
+	Name        types.String   `tfsdk:"name"`
+	Description types.String   `tfsdk:"description"`
+	ClusterType types.String   `tfsdk:"cluster_type"`
+	AuthType    types.String   `tfsdk:"auth_type"`
+	Labels      *labels.Labels `tfsdk:"labels"`
+	Id          types.String   `tfsdk:"id"`
+	Config      *config.Config `tfsdk:"config"`
+	CreatedAt   types.String   `tfsdk:"created_at"`
+	UpdatedAt   types.String   `tfsdk:"updated_at"`
 }
 
-func (r *RuntimegroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_runtimegroup"
+func (r *RunTimeGroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_run_time_group"
 }
 
-func (r *RuntimegroupResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *RunTimeGroupResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Description: "The runtime group ID.",
-				Optional:    true,
-			},
-
 			"name": schema.StringAttribute{
 				Description: "The name of the runtime group.",
-				Optional:    true,
+				Required:    true,
 			},
 
 			"description": schema.StringAttribute{
@@ -61,9 +58,39 @@ func (r *RuntimegroupResource) Schema(_ context.Context, req resource.SchemaRequ
 				Optional:    true,
 			},
 
-			"config": schema.SingleNestedAttribute{
+			"cluster_type": schema.StringAttribute{
+				Description: "The ClusterType value of the cluster associated with the Runtime Group.",
 				Optional:    true,
+			},
+
+			"auth_type": schema.StringAttribute{
+				Description: "The auth type value of the cluster associated with the Runtime Group.",
+				Optional:    true,
+			},
+
+			"labels": schema.SingleNestedAttribute{
+				Description: "Labels to facilitate tagged search on runtime groups. Keys must be of length 1-63 characters, and cannot start with 'kong', 'konnect', 'mesh', 'kic', or '_'.",
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description: "name",
+						Optional:    true,
+					},
+				},
+			},
+
+			"id": schema.StringAttribute{
+				Description: "The runtime group ID",
+				Computed:    true,
+				Optional:    true,
+			},
+
+			"config": schema.SingleNestedAttribute{
 				Description: "CP configuration object for related access endpoints.",
+				Computed:    true,
+				Optional:    true,
+
 				Attributes: map[string]schema.Attribute{
 					"control_plane_endpoint": schema.StringAttribute{
 						Description: "Control Plane Endpoint.",
@@ -79,28 +106,20 @@ func (r *RuntimegroupResource) Schema(_ context.Context, req resource.SchemaRequ
 
 			"created_at": schema.StringAttribute{
 				Description: "An ISO-8604 timestamp representation of runtime group creation date.",
+				Computed:    true,
 				Optional:    true,
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "An ISO-8604 timestamp representation of runtime group update date.",
-				Optional:    true,
-			},
-
-			"cluster_type": schema.StringAttribute{
-				Description: "The ClusterType value of the cluster associated with the Runtime Group.",
-				Optional:    true,
-			},
-
-			"auth_type": schema.StringAttribute{
-				Description: "The auth type value of the cluster associated with the Runtime Group.",
+				Computed:    true,
 				Optional:    true,
 			},
 		},
 	}
 }
 
-func (r *RuntimegroupResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *RunTimeGroupResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -119,8 +138,8 @@ func (r *RuntimegroupResource) Configure(ctx context.Context, req resource.Confi
 	r.client = apiClient
 }
 
-func (r *RuntimegroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data RuntimegroupResourceModel
+func (r *RunTimeGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data RunTimeGroupResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
@@ -130,7 +149,9 @@ func (r *RuntimegroupResource) Read(ctx context.Context, req resource.ReadReques
 
 	Id := data.Id.ValueString()
 
-	Runtimegroup, err := r.client.RuntimeGroups.GetRuntimeGroup(Id, shared.RequestOptions{})
+	requestOptions := shared.RequestOptions{}
+
+	runTimeGroup, err := r.client.RuntimeGroups.GetRuntimeGroup(Id, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -141,27 +162,35 @@ func (r *RuntimegroupResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	data.Id = types.StringValue(*Runtimegroup.Id)
+	data.Id = utils.NullableString(runTimeGroup.Id)
 
-	data.Name = types.StringValue(*Runtimegroup.Name)
+	data.Name = utils.NullableString(runTimeGroup.Name)
 
-	data.Description = types.StringValue(*Runtimegroup.Description)
+	data.Description = utils.NullableString(runTimeGroup.Description)
 
-	data.Config = config.Config{
-		ControlPlaneEndpoint: types.StringValue(*Runtimegroup.Config.ControlPlaneEndpoint),
+	data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
+		Name: utils.NullableString(runTimeGroup.Labels.Name),
+	})
 
-		TelemetryEndpoint: types.StringValue(*Runtimegroup.Config.TelemetryEndpoint),
+	data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
+		ControlPlaneEndpoint: utils.NullableString(runTimeGroup.Config.ControlPlaneEndpoint),
+
+		TelemetryEndpoint: utils.NullableString(runTimeGroup.Config.TelemetryEndpoint),
+	})
+
+	data.CreatedAt = utils.NullableString(runTimeGroup.CreatedAt)
+
+	data.UpdatedAt = utils.NullableString(runTimeGroup.UpdatedAt)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	data.CreatedAt = types.StringValue(*Runtimegroup.CreatedAt)
-
-	data.UpdatedAt = types.StringValue(*Runtimegroup.UpdatedAt)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *RuntimegroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data RuntimegroupResourceModel
+func (r *RunTimeGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data RunTimeGroupResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
@@ -169,48 +198,58 @@ func (r *RuntimegroupResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	// TODO: figure out struct name of createRequest
+	requestOptions := shared.RequestOptions{}
+
 	createRequest := runtimegroups.CreateRuntimeGroupRequest{
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
-		ClusterType: pointer(runtimegroups.ClusterType(data.ClusterType.ValueString())),
-		AuthType:    pointer(runtimegroups.AuthType(data.AuthType.ValueString())),
+		ClusterType: utils.Pointer(runtimegroups.ClusterType(data.ClusterType.ValueString())),
+		AuthType:    utils.Pointer(runtimegroups.AuthType(data.AuthType.ValueString())),
+		Labels: &runtimegroups.Labels{
+			Name: data.Labels.Name.ValueStringPointer(),
+		},
 	}
 
-	// make request
-	Runtimegroup, err := r.client.RuntimeGroups.CreateRuntimeGroup(createRequest, shared.RequestOptions{})
+	runTimeGroup, err := r.client.RuntimeGroups.CreateRuntimeGroup(createRequest, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Creating Runtimegroup",
+			"Error Creating RunTimeGroup",
 			err.Error(),
 		)
 
 		return
 	}
 
-	// TODO: this can probably be a function using reflection
-	data.Id = types.StringValue(*Runtimegroup.Id)
+	data.Id = utils.NullableString(runTimeGroup.Id)
 
-	data.Name = types.StringValue(*Runtimegroup.Name)
+	data.Name = utils.NullableString(runTimeGroup.Name)
 
-	data.Description = types.StringValue(*Runtimegroup.Description)
+	data.Description = utils.NullableString(runTimeGroup.Description)
 
-	data.Config = config.Config{
-		ControlPlaneEndpoint: types.StringValue(*Runtimegroup.Config.ControlPlaneEndpoint),
+	data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
+		Name: utils.NullableString(runTimeGroup.Labels.Name),
+	})
 
-		TelemetryEndpoint: types.StringValue(*Runtimegroup.Config.TelemetryEndpoint),
+	data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
+		ControlPlaneEndpoint: utils.NullableString(runTimeGroup.Config.ControlPlaneEndpoint),
+
+		TelemetryEndpoint: utils.NullableString(runTimeGroup.Config.TelemetryEndpoint),
+	})
+
+	data.CreatedAt = utils.NullableString(runTimeGroup.CreatedAt)
+
+	data.UpdatedAt = utils.NullableString(runTimeGroup.UpdatedAt)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	data.CreatedAt = types.StringValue(*Runtimegroup.CreatedAt)
-
-	data.UpdatedAt = types.StringValue(*Runtimegroup.UpdatedAt)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *RuntimegroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data = &RuntimegroupResourceModel{}
+func (r *RunTimeGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data = &RunTimeGroupResourceModel{}
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
@@ -218,20 +257,23 @@ func (r *RuntimegroupResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
+	requestOptions := shared.RequestOptions{}
+
 	Id := data.Id.ValueString()
 
-	err := r.client.RuntimeGroups.DeleteRuntimeGroup(Id, shared.RequestOptions{})
+	err := r.client.RuntimeGroups.DeleteRuntimeGroup(Id, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Deleting Runtimegroup",
+			"Error Deleting RunTimeGroup",
 			err.Error(),
 		)
 	}
 }
 
-func (r *RuntimegroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data = &RuntimegroupResourceModel{}
+func (r *RunTimeGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+
+	var data = &RunTimeGroupResourceModel{}
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
@@ -239,59 +281,58 @@ func (r *RuntimegroupResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	// TODO: add query params
+	requestOptions := shared.RequestOptions{}
+
 	Id := data.Id.ValueString()
 
 	updateRequest := runtimegroups.UpdateRuntimeGroupRequest{
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
-		AuthType:    pointer(runtimegroups.AuthType1(data.AuthType.ValueString())),
+		AuthType:    utils.Pointer(runtimegroups.AuthType1(data.AuthType.ValueString())),
+		Labels: &runtimegroups.Labels{
+			Name: data.Labels.Name.ValueStringPointer(),
+		},
 	}
 
-	Runtimegroup, err := r.client.RuntimeGroups.UpdateRuntimeGroup(Id, updateRequest, shared.RequestOptions{})
+	runTimeGroup, err := r.client.RuntimeGroups.UpdateRuntimeGroup(Id, updateRequest, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error updating Runtimegroup",
+			"Error updating RunTimeGroup",
 			err.Error(),
 		)
 
 		return
 	}
 
-	// TODO: this can probably be a function using reflection
-	data.Id = types.StringValue(*Runtimegroup.Id)
+	data.Id = utils.NullableString(runTimeGroup.Id)
 
-	data.Name = types.StringValue(*Runtimegroup.Name)
+	data.Name = utils.NullableString(runTimeGroup.Name)
 
-	data.Description = types.StringValue(*Runtimegroup.Description)
+	data.Description = utils.NullableString(runTimeGroup.Description)
 
-	data.Config = config.Config{
-		ControlPlaneEndpoint: types.StringValue(*Runtimegroup.Config.ControlPlaneEndpoint),
+	data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
+		Name: utils.NullableString(runTimeGroup.Labels.Name),
+	})
 
-		TelemetryEndpoint: types.StringValue(*Runtimegroup.Config.TelemetryEndpoint),
+	data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
+		ControlPlaneEndpoint: utils.NullableString(runTimeGroup.Config.ControlPlaneEndpoint),
+
+		TelemetryEndpoint: utils.NullableString(runTimeGroup.Config.TelemetryEndpoint),
+	})
+
+	data.CreatedAt = utils.NullableString(runTimeGroup.CreatedAt)
+
+	data.UpdatedAt = utils.NullableString(runTimeGroup.UpdatedAt)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	data.CreatedAt = types.StringValue(*Runtimegroup.CreatedAt)
-
-	data.UpdatedAt = types.StringValue(*Runtimegroup.UpdatedAt)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *RuntimegroupResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *RunTimeGroupResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Retrieve import ID and save to id attribute
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
-func Map[T, R any](from *[]T, f func(T) R) []R {
-	to := make([]R, len(*from))
-	for i, v := range *from {
-		to[i] = f(v)
-	}
-	return to
-}
-
-func pointer[T any](v T) *T {
-	return &v
 }

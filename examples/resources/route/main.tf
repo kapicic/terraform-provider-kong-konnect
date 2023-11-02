@@ -1,7 +1,8 @@
 resource "kong_route" "example" {
   created_at = "created_at"
 
-  Headers = {
+  headers = {
+    key = "key"
   }
 
 
@@ -25,7 +26,7 @@ resource "kong_route" "example" {
     "paths"
   ]
 
-  preserve_host = true
+  preserve_host = false
 
   protocols = [
     "protocols"
@@ -33,9 +34,9 @@ resource "kong_route" "example" {
 
   regex_priority = "regex_priority"
 
-  request_buffering = true
+  request_buffering = false
 
-  response_buffering = true
+  response_buffering = false
 
   service = {
     id = "id"
@@ -46,7 +47,7 @@ resource "kong_route" "example" {
     "snis"
   ]
 
-  string_path = true
+  strip_path = false
 
   tags = [
     "tags"

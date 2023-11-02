@@ -4,7 +4,7 @@ type UpdateRuntimeGroupRequest struct {
 	Name        *string    `json:"name,omitempty"`
 	Description *string    `json:"description,omitempty"`
 	AuthType    *AuthType1 `json:"auth_type,omitempty"`
-	Labels      *any       `json:"labels,omitempty"`
+	Labels      *Labels    `json:"labels,omitempty"`
 }
 
 func (u *UpdateRuntimeGroupRequest) SetName(name string) {
@@ -19,8 +19,15 @@ func (u *UpdateRuntimeGroupRequest) SetAuthType(authType AuthType1) {
 	u.AuthType = &authType
 }
 
-func (u *UpdateRuntimeGroupRequest) SetLabels(labels any) {
+func (u *UpdateRuntimeGroupRequest) SetLabels(labels Labels) {
 	u.Labels = &labels
+}
+
+func (u *UpdateRuntimeGroupRequest) GetLabels() *Labels {
+	if u.Labels == nil {
+		return nil
+	}
+	return u.Labels
 }
 
 type AuthType1 string
