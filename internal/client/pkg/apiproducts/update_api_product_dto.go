@@ -1,10 +1,10 @@
 package apiproducts
 
 type UpdateApiProductDto struct {
-	Name        *string   `json:"name,omitempty"`
-	Description *string   `json:"description,omitempty"`
-	Labels      *any      `json:"labels,omitempty"`
-	PortalIds   *[]string `json:"portal_ids,omitempty"`
+	Name        *string           `json:"name,omitempty"`
+	Description *string           `json:"description,omitempty"`
+	Labels      *ApiProductLabels `json:"labels,omitempty"`
+	PortalIds   *[]string         `json:"portal_ids,omitempty"`
 }
 
 func (u *UpdateApiProductDto) SetName(name string) {
@@ -15,8 +15,15 @@ func (u *UpdateApiProductDto) SetDescription(description string) {
 	u.Description = &description
 }
 
-func (u *UpdateApiProductDto) SetLabels(labels any) {
+func (u *UpdateApiProductDto) SetLabels(labels ApiProductLabels) {
 	u.Labels = &labels
+}
+
+func (u *UpdateApiProductDto) GetLabels() *ApiProductLabels {
+	if u.Labels == nil {
+		return nil
+	}
+	return u.Labels
 }
 
 func (u *UpdateApiProductDto) SetPortalIds(portalIds []string) {

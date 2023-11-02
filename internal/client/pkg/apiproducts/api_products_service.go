@@ -2,25 +2,24 @@ package apiproducts
 
 import (
 	"encoding/json"
-
 	restClient "github.com/kong-sdk/internal/clients/rest"
 	"github.com/kong-sdk/internal/clients/rest/httptransport"
 	"github.com/kong-sdk/pkg/shared"
 )
 
-type ApiService struct {
+type ApiProductsService struct {
 	client  *restClient.RestClient
 	baseUrl string
 }
 
-func NewApiService(baseUrl string) *ApiService {
-	return &ApiService{
-		client:  restClient.NewRestClient(baseUrl),
+func NewApiProductsService(baseUrl string, bearerToken string) *ApiProductsService {
+	return &ApiProductsService{
+		client:  restClient.NewRestClient(baseUrl, bearerToken),
 		baseUrl: baseUrl,
 	}
 }
 
-func (api *ApiService) CreateApiProduct(createApiProductDto CreateApiProductDto, opts shared.RequestOptions) (*ApiProduct, error) {
+func (api *ApiProductsService) CreateApiProduct(createApiProductDto CreateApiProductDto, opts shared.RequestOptions) (*ApiProduct, error) {
 	request := httptransport.NewRequest("POST", api.baseUrl, "/api-products", opts.Headers, opts.QueryParams)
 	request.Body = createApiProductDto
 
@@ -39,7 +38,7 @@ func (api *ApiService) CreateApiProduct(createApiProductDto CreateApiProductDto,
 
 }
 
-func (api *ApiService) GetApiProduct(id string, opts shared.RequestOptions) (*ApiProduct, error) {
+func (api *ApiProductsService) GetApiProduct(id string, opts shared.RequestOptions) (*ApiProduct, error) {
 	request := httptransport.NewRequest("GET", api.baseUrl, "/api-products/{id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("id", id)
@@ -59,7 +58,7 @@ func (api *ApiService) GetApiProduct(id string, opts shared.RequestOptions) (*Ap
 
 }
 
-func (api *ApiService) UpdateApiProduct(id string, updateApiProductDto UpdateApiProductDto, opts shared.RequestOptions) (*ApiProduct, error) {
+func (api *ApiProductsService) UpdateApiProduct(id string, updateApiProductDto UpdateApiProductDto, opts shared.RequestOptions) (*ApiProduct, error) {
 	request := httptransport.NewRequest("PATCH", api.baseUrl, "/api-products/{id}", opts.Headers, opts.QueryParams)
 	request.Body = updateApiProductDto
 
@@ -80,7 +79,7 @@ func (api *ApiService) UpdateApiProduct(id string, updateApiProductDto UpdateApi
 
 }
 
-func (api *ApiService) DeleteApiProduct(id string, opts shared.RequestOptions) error {
+func (api *ApiProductsService) DeleteApiProduct(id string, opts shared.RequestOptions) error {
 	request := httptransport.NewRequest("DELETE", api.baseUrl, "/api-products/{id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("id", id)

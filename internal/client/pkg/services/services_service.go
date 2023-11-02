@@ -2,25 +2,24 @@ package services
 
 import (
 	"encoding/json"
-
 	restClient "github.com/kong-sdk/internal/clients/rest"
 	"github.com/kong-sdk/internal/clients/rest/httptransport"
 	"github.com/kong-sdk/pkg/shared"
 )
 
-type ApiService struct {
+type ServicesService struct {
 	client  *restClient.RestClient
 	baseUrl string
 }
 
-func NewApiService(baseUrl string) *ApiService {
-	return &ApiService{
-		client:  restClient.NewRestClient(baseUrl),
+func NewServicesService(baseUrl string, bearerToken string) *ServicesService {
+	return &ServicesService{
+		client:  restClient.NewRestClient(baseUrl, bearerToken),
 		baseUrl: baseUrl,
 	}
 }
 
-func (api *ApiService) CreateService(runtimeGroupId string, service Service, opts shared.RequestOptions) (*CreateService_201Response, error) {
+func (api *ServicesService) CreateService(runtimeGroupId string, service Service, opts shared.RequestOptions) (*CreateService_201Response, error) {
 	request := httptransport.NewRequest("POST", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/services", opts.Headers, opts.QueryParams)
 	request.Body = service
 
@@ -41,7 +40,7 @@ func (api *ApiService) CreateService(runtimeGroupId string, service Service, opt
 
 }
 
-func (api *ApiService) GetService(runtimeGroupId string, serviceId string, opts shared.RequestOptions) (*GetService_200Response, error) {
+func (api *ServicesService) GetService(runtimeGroupId string, serviceId string, opts shared.RequestOptions) (*GetService_200Response, error) {
 	request := httptransport.NewRequest("GET", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/services/{service_id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("runtimeGroupId", runtimeGroupId)
@@ -62,7 +61,7 @@ func (api *ApiService) GetService(runtimeGroupId string, serviceId string, opts 
 
 }
 
-func (api *ApiService) UpsertService(runtimeGroupId string, serviceId string, service Service, opts shared.RequestOptions) (*UpsertService_200Response, error) {
+func (api *ServicesService) UpsertService(runtimeGroupId string, serviceId string, service Service, opts shared.RequestOptions) (*UpsertService_200Response, error) {
 	request := httptransport.NewRequest("PUT", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/services/{service_id}", opts.Headers, opts.QueryParams)
 	request.Body = service
 
@@ -84,7 +83,7 @@ func (api *ApiService) UpsertService(runtimeGroupId string, serviceId string, se
 
 }
 
-func (api *ApiService) DeleteService(runtimeGroupId string, serviceId string, opts shared.RequestOptions) error {
+func (api *ServicesService) DeleteService(runtimeGroupId string, serviceId string, opts shared.RequestOptions) error {
 	request := httptransport.NewRequest("DELETE", api.baseUrl, "/runtime-groups/{runtimeGroupId}/core-entities/services/{service_id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("runtimeGroupId", runtimeGroupId)

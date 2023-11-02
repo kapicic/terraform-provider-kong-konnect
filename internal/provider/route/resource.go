@@ -3,7 +3,6 @@ package route
 import (
 	"context"
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,7 +11,9 @@ import (
 	"github.com/kong-sdk/pkg/client"
 	"github.com/kong-sdk/pkg/routes"
 	"github.com/kong-sdk/pkg/shared"
+	"github.com/kong/internal/provider/route/models/headers"
 	"github.com/kong/internal/provider/route/models/service"
+	"github.com/kong/internal/utils"
 )
 
 // ensure we implement the needed interfaces
@@ -30,26 +31,27 @@ type RouteResource struct {
 }
 
 type RouteResourceModel struct {
-	CreatedAt               types.Int64     `tfsdk:"created_at"`
-	Hosts                   types.List      `tfsdk:"hosts"`
-	HttpsRedirectStatusCode types.Int64     `tfsdk:"https_redirect_status_code"`
-	Id                      types.String    `tfsdk:"id"`
-	Methods                 types.List      `tfsdk:"methods"`
-	Name                    types.String    `tfsdk:"name"`
-	PathHandling            types.String    `tfsdk:"path_handling"`
-	Paths                   types.List      `tfsdk:"paths"`
-	PreserveHost            types.Bool      `tfsdk:"preserve_host"`
-	Protocols               types.List      `tfsdk:"protocols"`
-	RegexPriority           types.Int64     `tfsdk:"regex_priority"`
-	RequestBuffering        types.Bool      `tfsdk:"request_buffering"`
-	ResponseBuffering       types.Bool      `tfsdk:"response_buffering"`
-	Service                 service.Service `tfsdk:"service"`
-	Snis                    types.List      `tfsdk:"snis"`
-	StripPath               types.Bool      `tfsdk:"strip_path"`
-	Tags                    types.List      `tfsdk:"tags"`
-	UpdatedAt               types.Int64     `tfsdk:"updated_at"`
-	RuntimeGroupId          types.String    `tfsdk:"runtime_group_id"`
-	RouteId                 types.String    `tfsdk:"route_id"`
+	CreatedAt               types.Int64      `tfsdk:"created_at"`
+	Headers                 *headers.Headers `tfsdk:"headers"`
+	Hosts                   types.List       `tfsdk:"hosts"`
+	HttpsRedirectStatusCode types.Int64      `tfsdk:"https_redirect_status_code"`
+	Id                      types.String     `tfsdk:"id"`
+	Methods                 types.List       `tfsdk:"methods"`
+	Name                    types.String     `tfsdk:"name"`
+	PathHandling            types.String     `tfsdk:"path_handling"`
+	Paths                   types.List       `tfsdk:"paths"`
+	PreserveHost            types.Bool       `tfsdk:"preserve_host"`
+	Protocols               types.List       `tfsdk:"protocols"`
+	RegexPriority           types.Int64      `tfsdk:"regex_priority"`
+	RequestBuffering        types.Bool       `tfsdk:"request_buffering"`
+	ResponseBuffering       types.Bool       `tfsdk:"response_buffering"`
+	Service                 *service.Service `tfsdk:"service"`
+	Snis                    types.List       `tfsdk:"snis"`
+	StripPath               types.Bool       `tfsdk:"strip_path"`
+	Tags                    types.List       `tfsdk:"tags"`
+	UpdatedAt               types.Int64      `tfsdk:"updated_at"`
+	RuntimeGroupId          types.String     `tfsdk:"runtime_group_id"`
+	RouteId                 types.String     `tfsdk:"route_id"`
 }
 
 func (r *RouteResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -65,10 +67,23 @@ func (r *RouteResource) Schema(_ context.Context, req resource.SchemaRequest, re
 				Optional:    true,
 			},
 
+			"headers": schema.SingleNestedAttribute{
+				Description: "One or more lists of values indexed by header name that will cause this route to match if present in the request. The `Host` header cannot be used with this attribute: hosts should be specified using the `hosts` attribute. When `headers` contains only one value and that value starts with the special prefix `~*`, the value is interpreted as a regular expression.",
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"key": schema.StringAttribute{
+						Description: "key",
+						Optional:    true,
+					},
+				},
+			},
+
 			"hosts": schema.ListAttribute{
 				Description: "A list of domain names that match this route. Note that the hosts value is case sensitive.",
-				ElementType: types.StringType,
 				Optional:    true,
+
+				ElementType: types.StringType,
 			},
 
 			"https_redirect_status_code": schema.Int64Attribute{
@@ -77,13 +92,15 @@ func (r *RouteResource) Schema(_ context.Context, req resource.SchemaRequest, re
 			},
 
 			"id": schema.StringAttribute{
-				Optional: true,
+				Description: "id",
+				Optional:    true,
 			},
 
 			"methods": schema.ListAttribute{
 				Description: "A list of HTTP methods that match this route.",
-				ElementType: types.StringType,
 				Optional:    true,
+
+				ElementType: types.StringType,
 			},
 
 			"name": schema.StringAttribute{
@@ -98,8 +115,9 @@ func (r *RouteResource) Schema(_ context.Context, req resource.SchemaRequest, re
 
 			"paths": schema.ListAttribute{
 				Description: "A list of paths that match this route.",
-				ElementType: types.StringType,
 				Optional:    true,
+
+				ElementType: types.StringType,
 			},
 
 			"preserve_host": schema.BoolAttribute{
@@ -109,8 +127,9 @@ func (r *RouteResource) Schema(_ context.Context, req resource.SchemaRequest, re
 
 			"protocols": schema.ListAttribute{
 				Description: "An array of the protocols this route should allow. See the [route Object](#route-object) section for a list of accepted protocols. When set to only `https`, HTTP requests are answered with an upgrade error. When set to only `http`, HTTPS requests are answered with an error.",
-				ElementType: types.StringType,
 				Optional:    true,
+
+				ElementType: types.StringType,
 			},
 
 			"regex_priority": schema.Int64Attribute{
@@ -130,28 +149,32 @@ func (r *RouteResource) Schema(_ context.Context, req resource.SchemaRequest, re
 
 			"service": schema.SingleNestedAttribute{
 				Description: "The service this route is associated to. This is where the route proxies traffic to.",
+				Optional:    true,
+
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Optional: true,
+						Description: "id",
+						Optional:    true,
 					},
 				},
-				Optional: true,
 			},
 
 			"snis": schema.ListAttribute{
 				Description: "A list of SNIs that match this route when using stream routing.",
 				Optional:    true,
+
 				ElementType: types.StringType,
 			},
 
 			"strip_path": schema.BoolAttribute{
-				Optional:    true,
 				Description: "When matching a route via one of the `paths`, strip the matching prefix from the upstream request URL.",
+				Optional:    true,
 			},
 
 			"tags": schema.ListAttribute{
-				Optional:    true,
 				Description: "An optional set of strings associated with the route for grouping and filtering.",
+				Optional:    true,
+
 				ElementType: types.StringType,
 			},
 
@@ -162,12 +185,12 @@ func (r *RouteResource) Schema(_ context.Context, req resource.SchemaRequest, re
 
 			"runtime_group_id": schema.StringAttribute{
 				Description: "The ID of your runtime group. This variable is available in the Konnect manager",
-				Required:    true,
+				Optional:    true,
 			},
 
 			"route_id": schema.StringAttribute{
 				Description: "The unique identifier or the name of the route to retrieve.",
-				Required:    true,
+				Optional:    true,
 			},
 		},
 	}
@@ -204,7 +227,9 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	RuntimeGroupId := data.RuntimeGroupId.ValueString()
 	RouteId := data.RouteId.ValueString()
 
-	Route, err := r.client.Routes.GetRoute(RuntimeGroupId, RouteId, shared.RequestOptions{})
+	requestOptions := shared.RequestOptions{}
+
+	route, err := r.client.Routes.GetRoute(RuntimeGroupId, RouteId, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -215,91 +240,81 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	data.CreatedAt = types.Int64Value(*Route.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(route.CreatedAt)
+
+	data.Headers = utils.NullableObject(route.Headers, headers.Headers{
+		Key: utils.NullableString(route.Headers.Key),
+	})
 
 	var HostsDiags diag.Diagnostics
 
-	data.Hosts, HostsDiags = types.ListValueFrom(ctx, types.StringType, Route.Hosts)
-
+	data.Hosts, HostsDiags = types.ListValueFrom(ctx, types.StringType, route.Hosts)
 	if HostsDiags.HasError() {
 		resp.Diagnostics.Append(HostsDiags...)
-
-		return
 	}
 
-	data.HttpsRedirectStatusCode = types.Int64Value(*Route.HttpsRedirectStatusCode)
+	data.HttpsRedirectStatusCode = utils.NullableInt64(route.HttpsRedirectStatusCode)
 
-	data.Id = types.StringValue(*Route.Id)
+	data.Id = utils.NullableString(route.Id)
 
 	var MethodsDiags diag.Diagnostics
 
-	data.Methods, MethodsDiags = types.ListValueFrom(ctx, types.StringType, Route.Methods)
-
+	data.Methods, MethodsDiags = types.ListValueFrom(ctx, types.StringType, route.Methods)
 	if MethodsDiags.HasError() {
 		resp.Diagnostics.Append(MethodsDiags...)
-
-		return
 	}
 
-	data.Name = types.StringValue(*Route.Name)
+	data.Name = utils.NullableString(route.Name)
 
-	data.PathHandling = types.StringValue(*Route.PathHandling)
+	data.PathHandling = utils.NullableString(route.PathHandling)
 
 	var PathsDiags diag.Diagnostics
 
-	data.Paths, PathsDiags = types.ListValueFrom(ctx, types.StringType, Route.Paths)
-
+	data.Paths, PathsDiags = types.ListValueFrom(ctx, types.StringType, route.Paths)
 	if PathsDiags.HasError() {
 		resp.Diagnostics.Append(PathsDiags...)
-
-		return
 	}
 
-	data.PreserveHost = types.BoolValue(*Route.PreserveHost)
+	data.PreserveHost = utils.NullableBool(route.PreserveHost)
 
 	var ProtocolsDiags diag.Diagnostics
 
-	data.Protocols, ProtocolsDiags = types.ListValueFrom(ctx, types.StringType, Route.Protocols)
-
+	data.Protocols, ProtocolsDiags = types.ListValueFrom(ctx, types.StringType, route.Protocols)
 	if ProtocolsDiags.HasError() {
 		resp.Diagnostics.Append(ProtocolsDiags...)
-
-		return
 	}
 
-	data.RegexPriority = types.Int64Value(*Route.RegexPriority)
+	data.RegexPriority = utils.NullableInt64(route.RegexPriority)
 
-	data.RequestBuffering = types.BoolValue(*Route.RequestBuffering)
+	data.RequestBuffering = utils.NullableBool(route.RequestBuffering)
 
-	data.ResponseBuffering = types.BoolValue(*Route.ResponseBuffering)
+	data.ResponseBuffering = utils.NullableBool(route.ResponseBuffering)
 
-	data.Service = service.Service{
-		Id: types.StringValue(*Route.Service.Id),
-	}
+	data.Service = utils.NullableObject(route.Service, service.Service{
+		Id: utils.NullableString(route.Service.Id),
+	})
 
 	var SnisDiags diag.Diagnostics
 
-	data.Snis, SnisDiags = types.ListValueFrom(ctx, types.StringType, Route.Snis)
-
+	data.Snis, SnisDiags = types.ListValueFrom(ctx, types.StringType, route.Snis)
 	if SnisDiags.HasError() {
 		resp.Diagnostics.Append(SnisDiags...)
-
-		return
 	}
 
-	data.StripPath = types.BoolValue(*Route.StripPath)
+	data.StripPath = utils.NullableBool(route.StripPath)
 
 	var TagsDiags diag.Diagnostics
 
-	data.Tags, TagsDiags = types.ListValueFrom(ctx, types.StringType, Route.Tags)
-
+	data.Tags, TagsDiags = types.ListValueFrom(ctx, types.StringType, route.Tags)
 	if TagsDiags.HasError() {
 		resp.Diagnostics.Append(TagsDiags...)
-
-		return
 	}
 
-	data.UpdatedAt = types.Int64Value(*Route.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(route.UpdatedAt)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -315,26 +330,35 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	RuntimeGroupId := data.RuntimeGroupId.ValueString()
 
-	// TODO: figure out struct name of createRequest
+	requestOptions := shared.RequestOptions{}
+
 	createRequest := routes.Route{
-		CreatedAt:               data.CreatedAt.ValueInt64Pointer(),
+		CreatedAt: data.CreatedAt.ValueInt64Pointer(),
+		Headers: &routes.Headers{
+			Key: data.Headers.Key.ValueStringPointer(),
+		},
+		Hosts:                   utils.FromListToPrimitiveSlice[string](ctx, data.Hosts, types.StringType, &resp.Diagnostics),
 		HttpsRedirectStatusCode: data.HttpsRedirectStatusCode.ValueInt64Pointer(),
 		Id:                      data.Id.ValueStringPointer(),
+		Methods:                 utils.FromListToPrimitiveSlice[string](ctx, data.Methods, types.StringType, &resp.Diagnostics),
 		Name:                    data.Name.ValueStringPointer(),
 		PathHandling:            data.PathHandling.ValueStringPointer(),
+		Paths:                   utils.FromListToPrimitiveSlice[string](ctx, data.Paths, types.StringType, &resp.Diagnostics),
 		PreserveHost:            data.PreserveHost.ValueBoolPointer(),
+		Protocols:               utils.FromListToPrimitiveSlice[string](ctx, data.Protocols, types.StringType, &resp.Diagnostics),
 		RegexPriority:           data.RegexPriority.ValueInt64Pointer(),
 		RequestBuffering:        data.RequestBuffering.ValueBoolPointer(),
 		ResponseBuffering:       data.ResponseBuffering.ValueBoolPointer(),
 		Service: &routes.Service{
 			Id: data.Service.Id.ValueStringPointer(),
 		},
+		Snis:      utils.FromListToPrimitiveSlice[string](ctx, data.Snis, types.StringType, &resp.Diagnostics),
 		StripPath: data.StripPath.ValueBoolPointer(),
+		Tags:      utils.FromListToPrimitiveSlice[string](ctx, data.Tags, types.StringType, &resp.Diagnostics),
 		UpdatedAt: data.UpdatedAt.ValueInt64Pointer(),
 	}
 
-	// make request
-	Route, err := r.client.Routes.CreateRoute(RuntimeGroupId, createRequest, shared.RequestOptions{})
+	route, err := r.client.Routes.CreateRoute(RuntimeGroupId, createRequest, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -345,92 +369,81 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	// TODO: this can probably be a function using reflection
-	data.CreatedAt = types.Int64Value(*Route.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(route.CreatedAt)
+
+	data.Headers = utils.NullableObject(route.Headers, headers.Headers{
+		Key: utils.NullableString(route.Headers.Key),
+	})
 
 	var HostsDiags diag.Diagnostics
 
-	data.Hosts, HostsDiags = types.ListValueFrom(ctx, types.StringType, Route.Hosts)
-
+	data.Hosts, HostsDiags = types.ListValueFrom(ctx, types.StringType, route.Hosts)
 	if HostsDiags.HasError() {
 		resp.Diagnostics.Append(HostsDiags...)
-
-		return
 	}
 
-	data.HttpsRedirectStatusCode = types.Int64Value(*Route.HttpsRedirectStatusCode)
+	data.HttpsRedirectStatusCode = utils.NullableInt64(route.HttpsRedirectStatusCode)
 
-	data.Id = types.StringValue(*Route.Id)
+	data.Id = utils.NullableString(route.Id)
 
 	var MethodsDiags diag.Diagnostics
 
-	data.Methods, MethodsDiags = types.ListValueFrom(ctx, types.StringType, Route.Methods)
-
+	data.Methods, MethodsDiags = types.ListValueFrom(ctx, types.StringType, route.Methods)
 	if MethodsDiags.HasError() {
 		resp.Diagnostics.Append(MethodsDiags...)
-
-		return
 	}
 
-	data.Name = types.StringValue(*Route.Name)
+	data.Name = utils.NullableString(route.Name)
 
-	data.PathHandling = types.StringValue(*Route.PathHandling)
+	data.PathHandling = utils.NullableString(route.PathHandling)
 
 	var PathsDiags diag.Diagnostics
 
-	data.Paths, PathsDiags = types.ListValueFrom(ctx, types.StringType, Route.Paths)
-
+	data.Paths, PathsDiags = types.ListValueFrom(ctx, types.StringType, route.Paths)
 	if PathsDiags.HasError() {
 		resp.Diagnostics.Append(PathsDiags...)
-
-		return
 	}
 
-	data.PreserveHost = types.BoolValue(*Route.PreserveHost)
+	data.PreserveHost = utils.NullableBool(route.PreserveHost)
 
 	var ProtocolsDiags diag.Diagnostics
 
-	data.Protocols, ProtocolsDiags = types.ListValueFrom(ctx, types.StringType, Route.Protocols)
-
+	data.Protocols, ProtocolsDiags = types.ListValueFrom(ctx, types.StringType, route.Protocols)
 	if ProtocolsDiags.HasError() {
 		resp.Diagnostics.Append(ProtocolsDiags...)
-
-		return
 	}
 
-	data.RegexPriority = types.Int64Value(*Route.RegexPriority)
+	data.RegexPriority = utils.NullableInt64(route.RegexPriority)
 
-	data.RequestBuffering = types.BoolValue(*Route.RequestBuffering)
+	data.RequestBuffering = utils.NullableBool(route.RequestBuffering)
 
-	data.ResponseBuffering = types.BoolValue(*Route.ResponseBuffering)
+	data.ResponseBuffering = utils.NullableBool(route.ResponseBuffering)
 
-	data.Service = service.Service{
-		Id: types.StringValue(*Route.Service.Id),
-	}
+	data.Service = utils.NullableObject(route.Service, service.Service{
+		Id: utils.NullableString(route.Service.Id),
+	})
 
 	var SnisDiags diag.Diagnostics
 
-	data.Snis, SnisDiags = types.ListValueFrom(ctx, types.StringType, Route.Snis)
-
+	data.Snis, SnisDiags = types.ListValueFrom(ctx, types.StringType, route.Snis)
 	if SnisDiags.HasError() {
 		resp.Diagnostics.Append(SnisDiags...)
-
-		return
 	}
 
-	data.StripPath = types.BoolValue(*Route.StripPath)
+	data.StripPath = utils.NullableBool(route.StripPath)
 
 	var TagsDiags diag.Diagnostics
 
-	data.Tags, TagsDiags = types.ListValueFrom(ctx, types.StringType, Route.Tags)
-
+	data.Tags, TagsDiags = types.ListValueFrom(ctx, types.StringType, route.Tags)
 	if TagsDiags.HasError() {
 		resp.Diagnostics.Append(TagsDiags...)
-
-		return
 	}
 
-	data.UpdatedAt = types.Int64Value(*Route.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(route.UpdatedAt)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -444,10 +457,12 @@ func (r *RouteResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
 	}
 
+	requestOptions := shared.RequestOptions{}
+
 	RuntimeGroupId := data.RuntimeGroupId.ValueString()
 	RouteId := data.RouteId.ValueString()
 
-	err := r.client.Routes.DeleteRoute(RuntimeGroupId, RouteId, shared.RequestOptions{})
+	err := r.client.Routes.DeleteRoute(RuntimeGroupId, RouteId, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -458,6 +473,7 @@ func (r *RouteResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 }
 
 func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+
 	var data = &RouteResourceModel{}
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -466,28 +482,38 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// TODO: add query params
+	requestOptions := shared.RequestOptions{}
+
 	RuntimeGroupId := data.RuntimeGroupId.ValueString()
 	RouteId := data.RouteId.ValueString()
 
 	updateRequest := routes.Route{
-		CreatedAt:               data.CreatedAt.ValueInt64Pointer(),
+		CreatedAt: data.CreatedAt.ValueInt64Pointer(),
+		Headers: &routes.Headers{
+			Key: data.Headers.Key.ValueStringPointer(),
+		},
+		Hosts:                   utils.FromListToPrimitiveSlice[string](ctx, data.Hosts, types.StringType, &resp.Diagnostics),
 		HttpsRedirectStatusCode: data.HttpsRedirectStatusCode.ValueInt64Pointer(),
 		Id:                      data.Id.ValueStringPointer(),
+		Methods:                 utils.FromListToPrimitiveSlice[string](ctx, data.Methods, types.StringType, &resp.Diagnostics),
 		Name:                    data.Name.ValueStringPointer(),
 		PathHandling:            data.PathHandling.ValueStringPointer(),
+		Paths:                   utils.FromListToPrimitiveSlice[string](ctx, data.Paths, types.StringType, &resp.Diagnostics),
 		PreserveHost:            data.PreserveHost.ValueBoolPointer(),
+		Protocols:               utils.FromListToPrimitiveSlice[string](ctx, data.Protocols, types.StringType, &resp.Diagnostics),
 		RegexPriority:           data.RegexPriority.ValueInt64Pointer(),
 		RequestBuffering:        data.RequestBuffering.ValueBoolPointer(),
 		ResponseBuffering:       data.ResponseBuffering.ValueBoolPointer(),
 		Service: &routes.Service{
 			Id: data.Service.Id.ValueStringPointer(),
 		},
+		Snis:      utils.FromListToPrimitiveSlice[string](ctx, data.Snis, types.StringType, &resp.Diagnostics),
 		StripPath: data.StripPath.ValueBoolPointer(),
+		Tags:      utils.FromListToPrimitiveSlice[string](ctx, data.Tags, types.StringType, &resp.Diagnostics),
 		UpdatedAt: data.UpdatedAt.ValueInt64Pointer(),
 	}
 
-	Route, err := r.client.Routes.UpsertRoute(RuntimeGroupId, RouteId, updateRequest, shared.RequestOptions{})
+	route, err := r.client.Routes.UpsertRoute(RuntimeGroupId, RouteId, updateRequest, requestOptions)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -498,92 +524,81 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// TODO: this can probably be a function using reflection
-	data.CreatedAt = types.Int64Value(*Route.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(route.CreatedAt)
+
+	data.Headers = utils.NullableObject(route.Headers, headers.Headers{
+		Key: utils.NullableString(route.Headers.Key),
+	})
 
 	var HostsDiags diag.Diagnostics
 
-	data.Hosts, HostsDiags = types.ListValueFrom(ctx, types.StringType, Route.Hosts)
-
+	data.Hosts, HostsDiags = types.ListValueFrom(ctx, types.StringType, route.Hosts)
 	if HostsDiags.HasError() {
 		resp.Diagnostics.Append(HostsDiags...)
-
-		return
 	}
 
-	data.HttpsRedirectStatusCode = types.Int64Value(*Route.HttpsRedirectStatusCode)
+	data.HttpsRedirectStatusCode = utils.NullableInt64(route.HttpsRedirectStatusCode)
 
-	data.Id = types.StringValue(*Route.Id)
+	data.Id = utils.NullableString(route.Id)
 
 	var MethodsDiags diag.Diagnostics
 
-	data.Methods, MethodsDiags = types.ListValueFrom(ctx, types.StringType, Route.Methods)
-
+	data.Methods, MethodsDiags = types.ListValueFrom(ctx, types.StringType, route.Methods)
 	if MethodsDiags.HasError() {
 		resp.Diagnostics.Append(MethodsDiags...)
-
-		return
 	}
 
-	data.Name = types.StringValue(*Route.Name)
+	data.Name = utils.NullableString(route.Name)
 
-	data.PathHandling = types.StringValue(*Route.PathHandling)
+	data.PathHandling = utils.NullableString(route.PathHandling)
 
 	var PathsDiags diag.Diagnostics
 
-	data.Paths, PathsDiags = types.ListValueFrom(ctx, types.StringType, Route.Paths)
-
+	data.Paths, PathsDiags = types.ListValueFrom(ctx, types.StringType, route.Paths)
 	if PathsDiags.HasError() {
 		resp.Diagnostics.Append(PathsDiags...)
-
-		return
 	}
 
-	data.PreserveHost = types.BoolValue(*Route.PreserveHost)
+	data.PreserveHost = utils.NullableBool(route.PreserveHost)
 
 	var ProtocolsDiags diag.Diagnostics
 
-	data.Protocols, ProtocolsDiags = types.ListValueFrom(ctx, types.StringType, Route.Protocols)
-
+	data.Protocols, ProtocolsDiags = types.ListValueFrom(ctx, types.StringType, route.Protocols)
 	if ProtocolsDiags.HasError() {
 		resp.Diagnostics.Append(ProtocolsDiags...)
-
-		return
 	}
 
-	data.RegexPriority = types.Int64Value(*Route.RegexPriority)
+	data.RegexPriority = utils.NullableInt64(route.RegexPriority)
 
-	data.RequestBuffering = types.BoolValue(*Route.RequestBuffering)
+	data.RequestBuffering = utils.NullableBool(route.RequestBuffering)
 
-	data.ResponseBuffering = types.BoolValue(*Route.ResponseBuffering)
+	data.ResponseBuffering = utils.NullableBool(route.ResponseBuffering)
 
-	data.Service = service.Service{
-		Id: types.StringValue(*Route.Service.Id),
-	}
+	data.Service = utils.NullableObject(route.Service, service.Service{
+		Id: utils.NullableString(route.Service.Id),
+	})
 
 	var SnisDiags diag.Diagnostics
 
-	data.Snis, SnisDiags = types.ListValueFrom(ctx, types.StringType, Route.Snis)
-
+	data.Snis, SnisDiags = types.ListValueFrom(ctx, types.StringType, route.Snis)
 	if SnisDiags.HasError() {
 		resp.Diagnostics.Append(SnisDiags...)
-
-		return
 	}
 
-	data.StripPath = types.BoolValue(*Route.StripPath)
+	data.StripPath = utils.NullableBool(route.StripPath)
 
 	var TagsDiags diag.Diagnostics
 
-	data.Tags, TagsDiags = types.ListValueFrom(ctx, types.StringType, Route.Tags)
-
+	data.Tags, TagsDiags = types.ListValueFrom(ctx, types.StringType, route.Tags)
 	if TagsDiags.HasError() {
 		resp.Diagnostics.Append(TagsDiags...)
-
-		return
 	}
 
-	data.UpdatedAt = types.Int64Value(*Route.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(route.UpdatedAt)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -591,16 +606,4 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 func (r *RouteResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Retrieve import ID and save to id attribute
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
-func Map[T, R any](from *[]T, f func(T) R) []R {
-	to := make([]R, len(*from))
-	for i, v := range *from {
-		to[i] = f(v)
-	}
-	return to
-}
-
-func pointer[T any](v T) *T {
-	return &v
 }

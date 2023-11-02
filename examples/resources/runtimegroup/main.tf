@@ -1,26 +1,15 @@
-resource "kong_runtime_group" "example" {
-  id = "id"
+resource "kong_run_time_group" "example" {
+    name = "name"
 
-  name = "name"
+    description = "description"
 
-  description = "description"
+    cluster_type = "cluster_type"
 
-  labels = {
-  }
+    auth_type = "auth_type"
 
+    labels = {
+                name = "name"
+}
 
-  config = {
-    control_plane_endpoint = "control_plane_endpoint"
-    telemetry_endpoint     = "telemetry_endpoint"
-  }
-
-
-  created_at = "created_at"
-
-  updated_at = "updated_at"
-
-  cluster_type = "cluster_type"
-
-  auth_type = "auth_type"
 
 }

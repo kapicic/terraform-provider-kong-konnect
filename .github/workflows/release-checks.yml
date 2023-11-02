@@ -1,0 +1,86 @@
+name: Release Checks
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.19'
+          stable: true
+
+      - name: Cache Go Modules
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Tidy Modules
+        run: go mod tidy
+
+      - name: Build the provider
+        run: go build -o terraform-provider-kong
+
+      - name: Run Unit Tests
+        run: make unit-test
+
+      # Uncomment once you have acceptance tests set up and you want them to run on PR checks
+      # - name: Run Acceptance Tests
+      #   run: make acceptance-test
+
+  publish:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.19'
+          stable: true
+
+      - name: Determine release tag
+        id: release_tag
+        run: echo "::set-output name=tag::v0.1.0-${{ github.sha }}"
+      
+      - name: Build Release Binary
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          release_name: Release ${{ steps.release_tag.outputs.tag }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+          asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+          asset_content_type: application/octet-stream

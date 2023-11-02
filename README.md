@@ -1,50 +1,46 @@
-# Kong Terraform Provider
-
+# kong Terraform Provider
 The Konnect platform API
-This repository contains a Terraform provider that allows you to manage resources through the KONG API.
+This repository contains a Terraform provider that allows you to manage resources through the kong API.
 
 ## Prerequisites
 
-- [Go](https://golang.org/doc/install) <= 1.19
+- [Go](https://golang.org/doc/install) >= 1.19
 
-- [Terraform](https://www.terraform.io/downloads.html) <= 1.0
+- [Terraform](https://www.terraform.io/downloads.html) >= 1.0
 
-- Access to the KONG API.
+- Access to the kong API.
 
 ## Installing The Provider
 
 1. Clone the repository:
-
 ```bash
-git clone https://github.com/liblaber/terraform-provider-kong
+git clone https://github.com/liblaber/terraform-provider-kong.git
 ```
 
 2. Navigate to the directory:
-
 ```bash
 cd terraform-provider-kong
 ```
 
 3. Update module references:
-
 ```bash
 go mod tidy
 ```
 
 4. Build the provider:
-
 ```bash
 go build -o terraform-provider-kong
 ```
 
 5. Move the provider to your plugins directory:
-
 ```bash
-mkdir -p ~/.terraform.d/plugins/example.com/user/kong/0.1.0/linux_amd64
-mv terraform-provider-kong ~/.terraform.d/plugins/example.com/user/kong/0.1.0/linux_amd64
+mkdir -p ~/.terraform.d/plugins/example.com/user/kong/<version>/<distribution>
+mv terraform-provider-kong ~/.terraform.d/plugins/example.com/user/kong/<version>/<distribution>
 ```
-
-Note: The directory structure is important. The provider must be located at `~/.terraform.d/plugins/example.com/user/kong/0.1.0/linux_amd64/terraform-provider-kong`
+Note: The directory structure is important. The provider must be located at `~/.terraform.d/plugins/example.com/user/kong/<version>/<distribution>/terraform-provider-kong`
+Also please change `example.com/user`, `<version>` and `<distribution>` to match your real values.
+<version> must match a semver.
+To get the <distribution> run `terraform version`, possible values: linux_amd64, darwin_arm64, windows_amd64, etc.
 
 ## Setting Up The Provider
 
@@ -54,7 +50,7 @@ In your Terraform configuration, reference the provider and supply the necessary
 
 ```hcl
 provider "kong" {
-api_endpoint = "https://localhost/"
+host = "https://localhost/"
 api_token = "YOUR_API_TOKEN"
 }
 ```
@@ -66,7 +62,7 @@ To plan and apply your Terraform configuration:
 1. Initialize your configuration:
 
 ```bash
-terraform init
+terraform init -plugin-dir=~/.terraform.d/plugins
 ```
 
 2. Plan your changes:
@@ -94,15 +90,20 @@ Then, run your Terraform commands.
 ## Running Tests
 
 1. Generate the docs:
-
 ```bash
 go generate ./...
 ```
 
-2. To execute the provider's tests:
+2. To execute the provider's tests, follow these steps:
 
+**a. Run Unit Tests**:
 ```bash
-make testacc
+make unit-test
+```
+
+**b. Run Acceptance Tests**:
+```bash
+make acceptance-test
 ```
 
 ## Publishing the Provider
@@ -110,14 +111,14 @@ make testacc
 1. Tag your release:
 
 ```bash
-git tag v0.1.0
+git tag v<version>
 git push --tags
 ```
 
 2. Build a release binary for your platform:
 
 ```bash
-GOOS=linux GOARCH=amd64 go build -o abbey-terraform-provider_v0.1.0
+GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong
 ```
 
 3. Upload the binary to the GitHub release or any other distribution method you prefer.

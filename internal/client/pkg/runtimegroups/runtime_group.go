@@ -4,7 +4,7 @@ type RuntimeGroup struct {
 	Id          *string `json:"id,omitempty"`
 	Name        *string `json:"name,omitempty"`
 	Description *string `json:"description,omitempty"`
-	Labels      *any    `json:"labels,omitempty"`
+	Labels      *Labels `json:"labels,omitempty"`
 	Config      *Config `json:"config,omitempty"`
 	CreatedAt   *string `json:"created_at,omitempty"`
 	UpdatedAt   *string `json:"updated_at,omitempty"`
@@ -22,8 +22,15 @@ func (r *RuntimeGroup) SetDescription(description string) {
 	r.Description = &description
 }
 
-func (r *RuntimeGroup) SetLabels(labels any) {
+func (r *RuntimeGroup) SetLabels(labels Labels) {
 	r.Labels = &labels
+}
+
+func (r *RuntimeGroup) GetLabels() *Labels {
+	if r.Labels == nil {
+		return nil
+	}
+	return r.Labels
 }
 
 func (r *RuntimeGroup) SetConfig(config Config) {

@@ -9,20 +9,20 @@ import (
 )
 
 type Client struct {
-	Routes             *routes.ApiService
-	Services           *services.ApiService
-	ApiProducts        *apiproducts.ApiService
-	ApiProductVersions *apiproductversions.ApiService
-	RuntimeGroups      *runtimegroups.ApiService
+	Routes             *routes.RoutesService
+	Services           *services.ServicesService
+	ApiProducts        *apiproducts.ApiProductsService
+	ApiProductVersions *apiproductversions.ApiProductVersionsService
+	RuntimeGroups      *runtimegroups.RuntimeGroupsService
 }
 
-func NewClient(baseUrl string) *Client {
+func NewClient(baseUrl string, bearerToken string) *Client {
 
 	return &Client{
-		Routes:             routes.NewApiService(baseUrl),
-		Services:           services.NewApiService(baseUrl),
-		ApiProducts:        apiproducts.NewApiService(baseUrl),
-		ApiProductVersions: apiproductversions.NewApiService(baseUrl),
-		RuntimeGroups:      runtimegroups.NewApiService(baseUrl),
+		Routes:             routes.NewRoutesService(baseUrl, bearerToken),
+		Services:           services.NewServicesService(baseUrl, bearerToken),
+		ApiProducts:        apiproducts.NewApiProductsService(baseUrl, bearerToken),
+		ApiProductVersions: apiproductversions.NewApiProductVersionsService(baseUrl, bearerToken),
+		RuntimeGroups:      runtimegroups.NewRuntimeGroupsService(baseUrl, bearerToken),
 	}
 }

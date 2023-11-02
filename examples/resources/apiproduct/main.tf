@@ -1,20 +1,11 @@
 resource "kong_api_product" "example" {
-  id = "id"
+    name = "name"
 
-  name = "name"
+    description = "description"
 
-  description = "description"
-
-  portal_ids = [
-    "portal_ids"
-  ]
-
-  created_at = "created_at"
-
-  updated_at = "updated_at"
-
-  labels = {
-  }
+    labels = {
+                name = "name"
+}
 
 
 }

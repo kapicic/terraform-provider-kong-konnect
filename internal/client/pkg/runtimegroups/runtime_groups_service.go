@@ -2,25 +2,24 @@ package runtimegroups
 
 import (
 	"encoding/json"
-
 	restClient "github.com/kong-sdk/internal/clients/rest"
 	"github.com/kong-sdk/internal/clients/rest/httptransport"
 	"github.com/kong-sdk/pkg/shared"
 )
 
-type ApiService struct {
+type RuntimeGroupsService struct {
 	client  *restClient.RestClient
 	baseUrl string
 }
 
-func NewApiService(baseUrl string) *ApiService {
-	return &ApiService{
-		client:  restClient.NewRestClient(baseUrl),
+func NewRuntimeGroupsService(baseUrl string, bearerToken string) *RuntimeGroupsService {
+	return &RuntimeGroupsService{
+		client:  restClient.NewRestClient(baseUrl, bearerToken),
 		baseUrl: baseUrl,
 	}
 }
 
-func (api *ApiService) CreateRuntimeGroup(createRuntimeGroupRequest CreateRuntimeGroupRequest, opts shared.RequestOptions) (*RuntimeGroup, error) {
+func (api *RuntimeGroupsService) CreateRuntimeGroup(createRuntimeGroupRequest CreateRuntimeGroupRequest, opts shared.RequestOptions) (*RuntimeGroup, error) {
 	request := httptransport.NewRequest("POST", api.baseUrl, "/runtime-groups", opts.Headers, opts.QueryParams)
 	request.Body = createRuntimeGroupRequest
 
@@ -39,7 +38,7 @@ func (api *ApiService) CreateRuntimeGroup(createRuntimeGroupRequest CreateRuntim
 
 }
 
-func (api *ApiService) GetRuntimeGroup(id string, opts shared.RequestOptions) (*RuntimeGroup, error) {
+func (api *RuntimeGroupsService) GetRuntimeGroup(id string, opts shared.RequestOptions) (*RuntimeGroup, error) {
 	request := httptransport.NewRequest("GET", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("id", id)
@@ -59,7 +58,7 @@ func (api *ApiService) GetRuntimeGroup(id string, opts shared.RequestOptions) (*
 
 }
 
-func (api *ApiService) UpdateRuntimeGroup(id string, updateRuntimeGroupRequest UpdateRuntimeGroupRequest, opts shared.RequestOptions) (*RuntimeGroup, error) {
+func (api *RuntimeGroupsService) UpdateRuntimeGroup(id string, updateRuntimeGroupRequest UpdateRuntimeGroupRequest, opts shared.RequestOptions) (*RuntimeGroup, error) {
 	request := httptransport.NewRequest("PATCH", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
 	request.Body = updateRuntimeGroupRequest
 
@@ -80,7 +79,7 @@ func (api *ApiService) UpdateRuntimeGroup(id string, updateRuntimeGroupRequest U
 
 }
 
-func (api *ApiService) DeleteRuntimeGroup(id string, opts shared.RequestOptions) error {
+func (api *RuntimeGroupsService) DeleteRuntimeGroup(id string, opts shared.RequestOptions) error {
 	request := httptransport.NewRequest("DELETE", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
 
 	request.SetPathParam("id", id)

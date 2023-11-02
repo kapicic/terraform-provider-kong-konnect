@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -32,7 +31,7 @@ type Provider struct {
 type kongProviderModel struct {
 	Host types.String `tfsdk:"host"`
 
-	VerifyTls types.Bool `tfsdk:"verifytls"`
+	AuthToken types.String `tfsdk:"auth_token"`
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -43,15 +42,15 @@ func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, r
 func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-
 			"host": schema.StringAttribute{
 				Required:    true,
+				Sensitive:   false,
 				Description: "The API host.",
 			},
-
-			"verify_tls": schema.BoolAttribute{
-				Optional:    true,
-				Description: "Whether or not to verify TLS.",
+			"auth_token": schema.StringAttribute{
+				Required:    true,
+				Sensitive:   true,
+				Description: "The authentication token.",
 			},
 		},
 	}
@@ -75,7 +74,16 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		return
 	}
 
-	apiClient := client.NewClient(data.Host.ValueString())
+	if data.AuthToken.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("auth_token"),
+			"Missing Auth Token",
+			"Cannot create API client with missing auth token.",
+		)
+		return
+	}
+
+	apiClient := client.NewClient(data.Host.ValueString(), data.AuthToken.ValueString())
 
 	// Example of setting the client in resp
 	resp.DataSourceData = apiClient
@@ -84,23 +92,16 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 func (p *Provider) Resources(ctx context.Context) []func() resource.Resource {
 	resources := []func() resource.Resource{}
-
 	resources = append(resources, route.NewRouteResource)
-
 	resources = append(resources, service.NewServiceResource)
-
-	resources = append(resources, apiproduct.NewApiproductResource)
-
-	resources = append(resources, apiproductversion.NewApiproductversionResource)
-
-	resources = append(resources, runtimegroup.NewRuntimegroupResource)
-
+	resources = append(resources, apiproduct.NewApiProductResource)
+	resources = append(resources, apiproductversion.NewApiProductVersionResource)
+	resources = append(resources, runtimegroup.NewRunTimeGroupResource)
 	return resources
 }
 
 func (p *Provider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	dataSources := []func() datasource.DataSource{}
-
 	return dataSources
 }
 
