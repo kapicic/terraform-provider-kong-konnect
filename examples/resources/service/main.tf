@@ -1,51 +1,51 @@
 resource "kong_service" "example" {
-    ca_certificates = [
-        "ca_certificates"
-    ]
+  ca_certificates = [
+    "ca_certificates"
+  ]
 
-    client_certificate = {
-                id = "id"
-}
-
-
-    connect_timeout = "connect_timeout"
-
-    created_at = "created_at"
-
-    enabled = false
-
-    host = "host"
-
+  client_certificate = {
     id = "id"
+  }
 
-    name = "name"
 
-    path = "path"
+  connect_timeout = "connect_timeout"
 
-    port = "port"
+  created_at = "created_at"
 
-    protocol = "protocol"
+  enabled = false
 
-    read_timeout = "read_timeout"
+  host = "host"
 
-    retries = "retries"
+  id = "id"
 
-    tags = [
-        "tags"
-    ]
+  name = "name"
 
-    tls_verify = false
+  path = "path"
 
-    tls_verify_depth = "tls_verify_depth"
+  port = "port"
 
-    updated_at = "updated_at"
+  protocol = "protocol"
 
-    url = "url"
+  read_timeout = "read_timeout"
 
-    write_timeout = "write_timeout"
+  retries = "retries"
 
-    runtime_group_id = "runtime_group_id"
+  tags = [
+    "tags"
+  ]
 
-    service_id = "service_id"
+  tls_verify = false
+
+  tls_verify_depth = "tls_verify_depth"
+
+  updated_at = "updated_at"
+
+  url = "url"
+
+  write_timeout = "write_timeout"
+
+  runtime_group_id = "runtime_group_id"
+
+  service_id = "service_id"
 
 }
