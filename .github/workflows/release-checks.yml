@@ -45,7 +45,6 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v2
 
@@ -55,21 +54,26 @@ jobs:
           go-version: '1.19'
           stable: true
 
+      - name: Determine release tag
+        id: release_tag
+        run: echo "::set-output name=tag::v0.1.0-${{ github.sha }}"
+
+      # Import the GPG key before the build step that requires it
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         id: import_gpg
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 
-      - name: Determine release tag
-        id: release_tag
-        run: echo "::set-output name=tag::v0.1.0-${{ github.sha }}"
-      
-      - name: Build and sign Release Binary
+      - name: Build Release Binary
         run: |
           GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
-          gpg --batch --yes --default-key "${{ steps.import_gpg.outputs.fingerprint }}" -a -b -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}.sig terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+        # Add the GPG_FINGERPRINT to the environment of the build step
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 
       - name: Create Release
         id: create_release
@@ -82,22 +86,14 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset Binary
+      - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Also add the GPG_FINGERPRINT here if the asset upload step uses it
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
-          asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Signature Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}.sig
           asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
           asset_content_type: application/octet-stream
