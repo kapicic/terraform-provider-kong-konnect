@@ -44,7 +44,6 @@ jobs:
   publish:
     needs: build-and-test
     runs-on: ubuntu-latest
-
     steps:
 
       - name: Checkout Repository
@@ -56,13 +55,21 @@ jobs:
           go-version: '1.19'
           stable: true
 
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        id: import_gpg
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+
       - name: Determine release tag
         id: release_tag
         run: echo "::set-output name=tag::v0.1.0-${{ github.sha }}"
       
-      - name: Build Release Binary
+      - name: Build and sign Release Binary
         run: |
           GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+          gpg --batch --yes -a -b -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}.sig terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
 
       - name: Create Release
         id: create_release
@@ -75,12 +82,22 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
+      - name: Upload Release Asset Binary
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+          asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Signature Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}.sig
           asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
           asset_content_type: application/octet-stream
