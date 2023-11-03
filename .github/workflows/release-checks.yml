@@ -69,7 +69,7 @@ jobs:
       - name: Build and sign Release Binary
         run: |
           GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
-          gpg --batch --yes --default-key ${{ steps.import_gpg.outputs.fingerprint }} -a -b -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}.sig terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
+          gpg --batch --yes --default-key "${{ steps.import_gpg.outputs.fingerprint }}" -a -b -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}.sig terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
 
       - name: Create Release
         id: create_release
