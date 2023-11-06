@@ -70,8 +70,8 @@ jobs:
 
       - name: Build Release Binary
         run: |
-          GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
-        # Add the GPG_FINGERPRINT to the environment of the build step
+          GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong
+          zip terraform-provider-kong_${{ steps.release_tag.outputs.tag }}_linux_amd64.zip terraform-provider-kong
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 
@@ -90,10 +90,9 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Also add the GPG_FINGERPRINT here if the asset upload step uses it
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
-          asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}
-          asset_content_type: application/octet-stream
+          asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}_linux_amd64.zip
+          asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}_linux_amd64.zip
+          asset_content_type: application/zip
