@@ -1,0 +1,33 @@
+# .goreleaser.yml
+
+# Build customization
+builds:
+  - 
+    id: "kong-konnect"
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - 386
+      - arm64
+    binary: terraform-provider-kong-konnect_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+# This section defines how the artifacts should be archived
+archives:
+  - 
+    id: "kong-konnect"
+    name_template: "terraform-provider-kong-konnect_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: zip
+    files:
+      - README.md
+    wrap_in_directory: true
+
+# Checksum and signing configuration
+checksum:
+  name_template: 'checksums.txt'
+
+# Snapshot configuration in case you want to create non-release builds
+snapshot:
+  name_template: "{{ .Tag }}-snapshot"
