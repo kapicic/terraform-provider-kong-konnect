@@ -11,16 +11,16 @@ type RestClient struct {
 }
 
 func NewRestClient(baseUrl string, bearerToken string) *RestClient {
-		defaultHeadersHandler := handlers.NewDefaultHeadersHandler()
-		bearerTokenHandler := handlers.NewBearerTokenHandler(bearerToken)
-		hookHandler := handlers.NewHookHandler(hooks.NewDefaultHook())
-		terminatingHandler := handlers.NewTerminatingHandler()
+	defaultHeadersHandler := handlers.NewDefaultHeadersHandler()
+	bearerTokenHandler := handlers.NewBearerTokenHandler(bearerToken)
+	hookHandler := handlers.NewHookHandler(hooks.NewDefaultHook())
+	terminatingHandler := handlers.NewTerminatingHandler()
 
 	handlers := handlers.BuildHandlerChain().
-AddHandler(defaultHeadersHandler).
-AddHandler(bearerTokenHandler).
-AddHandler(hookHandler).
-AddHandler(terminatingHandler)
+		AddHandler(defaultHeadersHandler).
+		AddHandler(bearerTokenHandler).
+		AddHandler(hookHandler).
+		AddHandler(terminatingHandler)
 
 	return &RestClient{
 		handlers: handlers,

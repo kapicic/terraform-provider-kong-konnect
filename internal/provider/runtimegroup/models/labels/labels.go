@@ -1,11 +1,9 @@
 package labels
 
 import (
-        "github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type Labels struct {
-    Name types.String `tfsdk:"name"`
+	Name types.String `tfsdk:"name"`
 }
-
-

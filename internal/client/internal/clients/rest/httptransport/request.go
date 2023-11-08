@@ -2,7 +2,7 @@ package httptransport
 
 import (
 	"bytes"
-  "encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -32,13 +32,12 @@ func NewRequest(method string, baseUrl string, path string, headers map[string]s
 	}
 }
 
-
 func (r *Request) Clone() Request {
 	if r == nil {
 		return Request{
-			Headers:    		make(map[string]string),
-			QueryParams:    make(map[string]string),
-			PathParams: 		make(map[string]string),
+			Headers:     make(map[string]string),
+			QueryParams: make(map[string]string),
+			PathParams:  make(map[string]string),
 		}
 	}
 
@@ -176,7 +175,7 @@ func (r *Request) bodyToBytesReader() (*bytes.Reader, error) {
 		return nil, nil
 	}
 
-  requestBody, err := json.Marshal(r.Body)
+	requestBody, err := json.Marshal(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert r.Body to []byte")
 	}

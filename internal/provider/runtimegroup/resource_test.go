@@ -1,13 +1,14 @@
+//go:build unit
 // +build unit
 
 package runtimegroup
 
 import (
 	"context"
-	"testing"
-	"github.com/kong-sdk/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/kong-sdk/pkg/client"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestConfigureResource(t *testing.T) {

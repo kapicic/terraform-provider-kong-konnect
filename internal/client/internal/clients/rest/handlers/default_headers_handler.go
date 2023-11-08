@@ -6,7 +6,6 @@ import (
 	"github.com/kong-sdk/internal/clients/rest/httptransport"
 )
 
-
 type DefaultHeadersHandler struct {
 	defaultHeaders map[string]string
 	nextHandler    Handler
