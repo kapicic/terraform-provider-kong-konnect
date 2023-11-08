@@ -9,5 +9,5 @@ import (
 func main() {
 	client := client.NewClient("http://example.com", "TOKEN")
 
-	fmt.Printf("%#v", client)
+		fmt.Printf("%#v", client)
 }

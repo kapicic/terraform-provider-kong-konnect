@@ -1,14 +1,13 @@
-//go:build unit
 // +build unit
 
 package apiproductversion
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/kong-sdk/pkg/client"
-	"github.com/stretchr/testify/assert"
 	"testing"
+	"github.com/kong-sdk/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConfigureResource(t *testing.T) {

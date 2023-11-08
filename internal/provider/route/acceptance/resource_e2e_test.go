@@ -1,4 +1,3 @@
-//go:build acceptance
 // +build acceptance
 
 package acceptance
@@ -6,9 +5,9 @@ package acceptance
 import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/kong/internal/provider"
 	"testing"
+	"github.com/kong/internal/provider"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 const (

@@ -1,9 +1,11 @@
 package api_product_labels
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework/types"
+        "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type ApiProductLabels struct {
-	Name types.String `tfsdk:"name"`
+    Name types.String `tfsdk:"name"`
 }
+
+

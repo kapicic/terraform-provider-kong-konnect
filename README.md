@@ -38,9 +38,8 @@ mkdir -p ~/.terraform.d/plugins/example.com/user/kong/<version>/<distribution>
 mv terraform-provider-kong ~/.terraform.d/plugins/example.com/user/kong/<version>/<distribution>
 ```
 Note: The directory structure is important. The provider must be located at `~/.terraform.d/plugins/example.com/user/kong/<version>/<distribution>/terraform-provider-kong`
-Also please change `example.com/user`, `<version>` and `<distribution>` to match your real values.
-<version> must match a semver.
-To get the <distribution> run `terraform version`, possible values: linux_amd64, darwin_arm64, windows_amd64, etc.
+Also please change `example.com/user`, `<version>` and `<distribution>` to match your real values. `<version>` must match a semver.
+To get the <distribution> run `terraform version`, possible values: `linux_amd64`, `darwin_arm64`, `windows_amd64`, etc.
 
 ## Setting Up The Provider
 

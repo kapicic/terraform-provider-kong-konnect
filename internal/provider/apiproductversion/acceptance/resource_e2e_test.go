@@ -1,4 +1,3 @@
-//go:build acceptance
 // +build acceptance
 
 package acceptance
@@ -6,9 +5,9 @@ package acceptance
 import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/kong/internal/provider"
 	"testing"
+	"github.com/kong/internal/provider"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 const (
@@ -38,15 +37,15 @@ func TestAcckongApiProductVersionResource(t *testing.T) {
 resource "kong_api_product_version" "example" {
     name = "name"
 
-    publish_status = "publish_status"
-
-    deprecated = false
-
     gateway_service = {
                 id = "id"
                 control_plane_id = "control_plane_id"
 }
 
+
+    publish_status = "publish_status"
+
+    deprecated = false
 
     notify = false
 
@@ -58,10 +57,10 @@ resource "kong_api_product_version" "example" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Extend this based on the model attributes
 					resource.TestCheckResourceAttr("kong_api_product_version.example", "name", "name"),
-					resource.TestCheckResourceAttr("kong_api_product_version.example", "publish_status", "publish_status"),
-					resource.TestCheckResourceAttr("kong_api_product_version.example", "deprecated", false),
 					resource.TestCheckResourceAttr("kong_api_product_version.example", "gateway_service.id", "id"),
 					resource.TestCheckResourceAttr("kong_api_product_version.example", "gateway_service.control_plane_id", "control_plane_id"),
+					resource.TestCheckResourceAttr("kong_api_product_version.example", "publish_status", "publish_status"),
+					resource.TestCheckResourceAttr("kong_api_product_version.example", "deprecated", false),
 					resource.TestCheckResourceAttr("kong_api_product_version.example", "notify", false),
 					resource.TestCheckResourceAttr("kong_api_product_version.example", "api_product_id", "api_product_id"),
 				),

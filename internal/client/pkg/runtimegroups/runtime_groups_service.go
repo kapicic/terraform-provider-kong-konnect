@@ -1,10 +1,10 @@
 package runtimegroups
 
 import (
-	"encoding/json"
-	restClient "github.com/kong-sdk/internal/clients/rest"
-	"github.com/kong-sdk/internal/clients/rest/httptransport"
-	"github.com/kong-sdk/pkg/shared"
+"encoding/json"
+restClient "github.com/kong-sdk/internal/clients/rest"
+"github.com/kong-sdk/internal/clients/rest/httptransport"
+"github.com/kong-sdk/pkg/shared"
 )
 
 type RuntimeGroupsService struct {
@@ -19,76 +19,90 @@ func NewRuntimeGroupsService(baseUrl string, bearerToken string) *RuntimeGroupsS
 	}
 }
 
+
 func (api *RuntimeGroupsService) CreateRuntimeGroup(createRuntimeGroupRequest CreateRuntimeGroupRequest, opts shared.RequestOptions) (*RuntimeGroup, error) {
-	request := httptransport.NewRequest("POST", api.baseUrl, "/runtime-groups", opts.Headers, opts.QueryParams)
+	  request := httptransport.NewRequest("POST", api.baseUrl, "/runtime-groups", opts.Headers, opts.QueryParams)
 	request.Body = createRuntimeGroupRequest
 
-	resp, err := api.client.Call(request)
-	if err != nil {
-		return nil, err.GetError()
-	}
+	
 
-	result := &RuntimeGroup{}
-	jsonErr := json.Unmarshal(resp.Body, result)
-	if err != nil {
-		return nil, jsonErr
-	}
+	
+		resp, err := api.client.Call(request)
+		if err != nil {
+			return nil, err.GetError()
+		}
 
-	return result, nil
+		result := &RuntimeGroup{}
+		jsonErr := json.Unmarshal(resp.Body, result)
+		if err != nil {
+			return nil, jsonErr
+		}
 
+		return result, nil
+	
 }
 
+
 func (api *RuntimeGroupsService) GetRuntimeGroup(id string, opts shared.RequestOptions) (*RuntimeGroup, error) {
-	request := httptransport.NewRequest("GET", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
+	  request := httptransport.NewRequest("GET", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
+	
 
 	request.SetPathParam("id", id)
 
-	resp, err := api.client.Call(request)
-	if err != nil {
-		return nil, err.GetError()
-	}
+	
+		resp, err := api.client.Call(request)
+		if err != nil {
+			return nil, err.GetError()
+		}
 
-	result := &RuntimeGroup{}
-	jsonErr := json.Unmarshal(resp.Body, result)
-	if err != nil {
-		return nil, jsonErr
-	}
+		result := &RuntimeGroup{}
+		jsonErr := json.Unmarshal(resp.Body, result)
+		if err != nil {
+			return nil, jsonErr
+		}
 
-	return result, nil
-
+		return result, nil
+	
 }
 
+
 func (api *RuntimeGroupsService) UpdateRuntimeGroup(id string, updateRuntimeGroupRequest UpdateRuntimeGroupRequest, opts shared.RequestOptions) (*RuntimeGroup, error) {
-	request := httptransport.NewRequest("PATCH", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
+	  request := httptransport.NewRequest("PATCH", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
 	request.Body = updateRuntimeGroupRequest
 
 	request.SetPathParam("id", id)
 
-	resp, err := api.client.Call(request)
-	if err != nil {
-		return nil, err.GetError()
-	}
+	
+		resp, err := api.client.Call(request)
+		if err != nil {
+			return nil, err.GetError()
+		}
 
-	result := &RuntimeGroup{}
-	jsonErr := json.Unmarshal(resp.Body, result)
-	if err != nil {
-		return nil, jsonErr
-	}
+		result := &RuntimeGroup{}
+		jsonErr := json.Unmarshal(resp.Body, result)
+		if err != nil {
+			return nil, jsonErr
+		}
 
-	return result, nil
-
+		return result, nil
+	
 }
 
-func (api *RuntimeGroupsService) DeleteRuntimeGroup(id string, opts shared.RequestOptions) error {
-	request := httptransport.NewRequest("DELETE", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
+
+func (api *RuntimeGroupsService) DeleteRuntimeGroup(id string, opts shared.RequestOptions) (error) {
+	  request := httptransport.NewRequest("DELETE", api.baseUrl, "/runtime-groups/{id}", opts.Headers, opts.QueryParams)
+	
 
 	request.SetPathParam("id", id)
 
-	_, err := api.client.Call(request)
-	if err != nil {
-		return err.GetError()
-	}
+	
+		_, err := api.client.Call(request)
+		if err != nil {
+			return err.GetError()
+		}
 
-	return nil
-
+		return nil
+	
 }
+
+
