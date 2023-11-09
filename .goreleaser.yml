@@ -32,3 +32,8 @@ checksum:
 # Snapshot configuration in case you want to create non-release builds
 snapshot:
   name_template: "{{ .Tag }}-snapshot"
+
+# Signing configuration
+signs:
+  - artifacts: checksum
+    args: ["--batch", "-u", "$GPG_FINGERPRINT", "--output", "${artifact}.sig", "--detach-sign", "${artifact}"]
