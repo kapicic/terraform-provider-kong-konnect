@@ -26,7 +26,7 @@ description: |-
 - `config` (Attributes) CP configuration object for related access endpoints. (see [below for nested schema](#nestedatt--config))
 - `created_at` (String) An ISO-8604 timestamp representation of runtime group creation date.
 - `description` (String) The description of the runtime group in Konnect.
-- `id` (String) The runtime group ID
+- `id` (String) The runtime group ID.
 - `labels` (Attributes) Labels to facilitate tagged search on runtime groups. Keys must be of length 1-63 characters, and cannot start with 'kong', 'konnect', 'mesh', 'kic', or '_'. (see [below for nested schema](#nestedatt--labels))
 - `updated_at` (String) An ISO-8604 timestamp representation of runtime group update date.
 

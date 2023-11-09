@@ -7,3 +7,10 @@ type ApiProductLabels struct {
 func (a *ApiProductLabels) SetName(name string) {
 	a.Name = &name
 }
+
+func (a *ApiProductLabels) GetName() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Name
+}

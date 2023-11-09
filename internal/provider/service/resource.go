@@ -29,8 +29,6 @@ type ServiceResource struct {
 }
 
 type ServiceResourceModel struct {
-	CaCertificates    types.List                            `tfsdk:"ca_certificates"`
-	ClientCertificate *client_certificate.ClientCertificate `tfsdk:"client_certificate"`
 	ConnectTimeout    types.Int64                           `tfsdk:"connect_timeout"`
 	CreatedAt         types.Int64                           `tfsdk:"created_at"`
 	Enabled           types.Bool                            `tfsdk:"enabled"`
@@ -42,12 +40,14 @@ type ServiceResourceModel struct {
 	Protocol          types.String                          `tfsdk:"protocol"`
 	ReadTimeout       types.Int64                           `tfsdk:"read_timeout"`
 	Retries           types.Int64                           `tfsdk:"retries"`
+	UpdatedAt         types.Int64                           `tfsdk:"updated_at"`
+	WriteTimeout      types.Int64                           `tfsdk:"write_timeout"`
+	CaCertificates    types.List                            `tfsdk:"ca_certificates"`
+	ClientCertificate *client_certificate.ClientCertificate `tfsdk:"client_certificate"`
 	Tags              types.List                            `tfsdk:"tags"`
 	TlsVerify         types.Bool                            `tfsdk:"tls_verify"`
 	TlsVerifyDepth    types.Int64                           `tfsdk:"tls_verify_depth"`
-	UpdatedAt         types.Int64                           `tfsdk:"updated_at"`
 	Url               types.String                          `tfsdk:"url"`
-	WriteTimeout      types.Int64                           `tfsdk:"write_timeout"`
 	RuntimeGroupId    types.String                          `tfsdk:"runtime_group_id"`
 	ServiceId         types.String                          `tfsdk:"service_id"`
 }
@@ -59,6 +59,71 @@ func (r *ServiceResource) Metadata(_ context.Context, req resource.MetadataReque
 func (r *ServiceResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"connect_timeout": schema.Int64Attribute{
+				Description: "connect_timeout",
+				Optional:    true,
+			},
+
+			"created_at": schema.Int64Attribute{
+				Description: "Unix epoch when the resource was last created.",
+				Optional:    true,
+			},
+
+			"enabled": schema.BoolAttribute{
+				Description: "Service enabled boolean",
+				Optional:    true,
+			},
+
+			"host": schema.StringAttribute{
+				Description: "host",
+				Optional:    true,
+			},
+
+			"id": schema.StringAttribute{
+				Description: "id",
+				Optional:    true,
+			},
+
+			"name": schema.StringAttribute{
+				Description: "name",
+				Optional:    true,
+			},
+
+			"path": schema.StringAttribute{
+				Description: "path",
+				Optional:    true,
+			},
+
+			"port": schema.Int64Attribute{
+				Description: "port",
+				Optional:    true,
+			},
+
+			"protocol": schema.StringAttribute{
+				Description: "protocol",
+				Optional:    true,
+			},
+
+			"read_timeout": schema.Int64Attribute{
+				Description: "read_timeout",
+				Optional:    true,
+			},
+
+			"retries": schema.Int64Attribute{
+				Description: "retries",
+				Optional:    true,
+			},
+
+			"updated_at": schema.Int64Attribute{
+				Description: "updated_at",
+				Optional:    true,
+			},
+
+			"write_timeout": schema.Int64Attribute{
+				Description: "write_timeout",
+				Optional:    true,
+			},
+
 			"ca_certificates": schema.ListAttribute{
 				Description: "Array of `CA Certificate` object UUIDs that are used to build the trust store while verifying upstream server's TLS certificate. If set to `null` when Nginx default is respected. If default CA list in Nginx are not specified and TLS verification is enabled, then handshake with upstream server will always fail (because no CA are trusted).",
 				Optional:    true,
@@ -78,61 +143,6 @@ func (r *ServiceResource) Schema(_ context.Context, req resource.SchemaRequest, 
 				},
 			},
 
-			"connect_timeout": schema.Int64Attribute{
-				Description: "The timeout in milliseconds for establishing a connection to the upstream server.",
-				Optional:    true,
-			},
-
-			"created_at": schema.Int64Attribute{
-				Description: "Unix epoch when the resource was created.",
-				Optional:    true,
-			},
-
-			"enabled": schema.BoolAttribute{
-				Description: "Whether the service is active. If set to `false`, the proxy behavior will be as if any routes attached to it do not exist (404). Default: `true`.",
-				Optional:    true,
-			},
-
-			"host": schema.StringAttribute{
-				Description: "The host of the upstream server. Note that the host value is case sensitive.",
-				Optional:    true,
-			},
-
-			"id": schema.StringAttribute{
-				Description: "id",
-				Optional:    true,
-			},
-
-			"name": schema.StringAttribute{
-				Description: "The service name.",
-				Optional:    true,
-			},
-
-			"path": schema.StringAttribute{
-				Description: "The path to be used in requests to the upstream server.",
-				Optional:    true,
-			},
-
-			"port": schema.Int64Attribute{
-				Description: "The upstream server port.",
-				Optional:    true,
-			},
-
-			"protocol": schema.StringAttribute{
-				Description: "The protocol used to communicate with the upstream.",
-				Optional:    true,
-			},
-
-			"read_timeout": schema.Int64Attribute{
-				Description: "The timeout in milliseconds between two successive read operations for transmitting a request to the upstream server.",
-				Optional:    true,
-			},
-
-			"retries": schema.Int64Attribute{
-				Description: "The number of retries to execute upon failure to proxy.",
-				Optional:    true,
-			},
-
 			"tags": schema.ListAttribute{
 				Description: "An optional set of strings associated with the service for grouping and filtering.",
 				Optional:    true,
@@ -150,18 +160,8 @@ func (r *ServiceResource) Schema(_ context.Context, req resource.SchemaRequest, 
 				Optional:    true,
 			},
 
-			"updated_at": schema.Int64Attribute{
-				Description: "Unix epoch when the resource was last updated.",
-				Optional:    true,
-			},
-
 			"url": schema.StringAttribute{
 				Description: "Helper field to set `protocol`, `host`, `port` and `path` using a URL. This field is write-only and is not returned in responses.",
-				Optional:    true,
-			},
-
-			"write_timeout": schema.Int64Attribute{
-				Description: "The timeout in milliseconds between two successive write operations for transmitting a request to the upstream server.",
 				Optional:    true,
 			},
 
@@ -199,8 +199,7 @@ func (r *ServiceResource) Configure(ctx context.Context, req resource.ConfigureR
 
 func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ServiceResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -222,31 +221,31 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	data.ConnectTimeout = utils.NullableInt64(service.ConnectTimeout)
+	data.ConnectTimeout = utils.NullableInt64(service.GetConnectTimeout())
 
-	data.CreatedAt = utils.NullableInt64(service.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(service.GetCreatedAt())
 
-	data.Enabled = utils.NullableBool(service.Enabled)
+	data.Enabled = utils.NullableBool(service.GetEnabled())
 
-	data.Host = utils.NullableString(service.Host)
+	data.Host = utils.NullableString(service.GetHost())
 
-	data.Id = utils.NullableString(service.Id)
+	data.Id = utils.NullableString(service.GetId())
 
-	data.Name = utils.NullableString(service.Name)
+	data.Name = utils.NullableString(service.GetName())
 
-	data.Path = utils.NullableString(service.Path)
+	data.Path = utils.NullableString(service.GetPath())
 
-	data.Port = utils.NullableInt64(service.Port)
+	data.Port = utils.NullableInt64(service.GetPort())
 
-	data.Protocol = utils.NullableString(service.Protocol)
+	data.Protocol = utils.NullableString(service.GetProtocol())
 
-	data.ReadTimeout = utils.NullableInt64(service.ReadTimeout)
+	data.ReadTimeout = utils.NullableInt64(service.GetReadTimeout())
 
-	data.Retries = utils.NullableInt64(service.Retries)
+	data.Retries = utils.NullableInt64(service.GetRetries())
 
-	data.UpdatedAt = utils.NullableInt64(service.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(service.GetUpdatedAt())
 
-	data.WriteTimeout = utils.NullableInt64(service.WriteTimeout)
+	data.WriteTimeout = utils.NullableInt64(service.GetWriteTimeout())
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -257,8 +256,7 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data ServiceResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -270,9 +268,12 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 
 	createRequest := services.Service{
 		CaCertificates: utils.FromListToPrimitiveSlice[string](ctx, data.CaCertificates, types.StringType, &resp.Diagnostics),
-		ClientCertificate: &services.ClientCertificate{
-			Id: data.ClientCertificate.Id.ValueStringPointer(),
-		},
+
+		ClientCertificate: utils.NullableTfStateObject(data.ClientCertificate, func(from *client_certificate.ClientCertificate) services.ClientCertificate {
+			return services.ClientCertificate{
+				Id: from.Id.ValueStringPointer(),
+			}
+		}),
 		ConnectTimeout: data.ConnectTimeout.ValueInt64Pointer(),
 		CreatedAt:      data.CreatedAt.ValueInt64Pointer(),
 		Enabled:        data.Enabled.ValueBoolPointer(),
@@ -303,31 +304,31 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	data.ConnectTimeout = utils.NullableInt64(service.ConnectTimeout)
+	data.ConnectTimeout = utils.NullableInt64(service.GetConnectTimeout())
 
-	data.CreatedAt = utils.NullableInt64(service.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(service.GetCreatedAt())
 
-	data.Enabled = utils.NullableBool(service.Enabled)
+	data.Enabled = utils.NullableBool(service.GetEnabled())
 
-	data.Host = utils.NullableString(service.Host)
+	data.Host = utils.NullableString(service.GetHost())
 
-	data.Id = utils.NullableString(service.Id)
+	data.Id = utils.NullableString(service.GetId())
 
-	data.Name = utils.NullableString(service.Name)
+	data.Name = utils.NullableString(service.GetName())
 
-	data.Path = utils.NullableString(service.Path)
+	data.Path = utils.NullableString(service.GetPath())
 
-	data.Port = utils.NullableInt64(service.Port)
+	data.Port = utils.NullableInt64(service.GetPort())
 
-	data.Protocol = utils.NullableString(service.Protocol)
+	data.Protocol = utils.NullableString(service.GetProtocol())
 
-	data.ReadTimeout = utils.NullableInt64(service.ReadTimeout)
+	data.ReadTimeout = utils.NullableInt64(service.GetReadTimeout())
 
-	data.Retries = utils.NullableInt64(service.Retries)
+	data.Retries = utils.NullableInt64(service.GetRetries())
 
-	data.UpdatedAt = utils.NullableInt64(service.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(service.GetUpdatedAt())
 
-	data.WriteTimeout = utils.NullableInt64(service.WriteTimeout)
+	data.WriteTimeout = utils.NullableInt64(service.GetWriteTimeout())
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -338,8 +339,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 
 func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data = &ServiceResourceModel{}
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -361,10 +361,8 @@ func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest
 }
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-
 	var data = &ServiceResourceModel{}
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -377,9 +375,12 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	updateRequest := services.Service{
 		CaCertificates: utils.FromListToPrimitiveSlice[string](ctx, data.CaCertificates, types.StringType, &resp.Diagnostics),
-		ClientCertificate: &services.ClientCertificate{
-			Id: data.ClientCertificate.Id.ValueStringPointer(),
-		},
+
+		ClientCertificate: utils.NullableTfStateObject(data.ClientCertificate, func(from *client_certificate.ClientCertificate) services.ClientCertificate {
+			return services.ClientCertificate{
+				Id: from.Id.ValueStringPointer(),
+			}
+		}),
 		ConnectTimeout: data.ConnectTimeout.ValueInt64Pointer(),
 		CreatedAt:      data.CreatedAt.ValueInt64Pointer(),
 		Enabled:        data.Enabled.ValueBoolPointer(),
@@ -410,31 +411,31 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	data.ConnectTimeout = utils.NullableInt64(service.ConnectTimeout)
+	data.ConnectTimeout = utils.NullableInt64(service.GetConnectTimeout())
 
-	data.CreatedAt = utils.NullableInt64(service.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(service.GetCreatedAt())
 
-	data.Enabled = utils.NullableBool(service.Enabled)
+	data.Enabled = utils.NullableBool(service.GetEnabled())
 
-	data.Host = utils.NullableString(service.Host)
+	data.Host = utils.NullableString(service.GetHost())
 
-	data.Id = utils.NullableString(service.Id)
+	data.Id = utils.NullableString(service.GetId())
 
-	data.Name = utils.NullableString(service.Name)
+	data.Name = utils.NullableString(service.GetName())
 
-	data.Path = utils.NullableString(service.Path)
+	data.Path = utils.NullableString(service.GetPath())
 
-	data.Port = utils.NullableInt64(service.Port)
+	data.Port = utils.NullableInt64(service.GetPort())
 
-	data.Protocol = utils.NullableString(service.Protocol)
+	data.Protocol = utils.NullableString(service.GetProtocol())
 
-	data.ReadTimeout = utils.NullableInt64(service.ReadTimeout)
+	data.ReadTimeout = utils.NullableInt64(service.GetReadTimeout())
 
-	data.Retries = utils.NullableInt64(service.Retries)
+	data.Retries = utils.NullableInt64(service.GetRetries())
 
-	data.UpdatedAt = utils.NullableInt64(service.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(service.GetUpdatedAt())
 
-	data.WriteTimeout = utils.NullableInt64(service.WriteTimeout)
+	data.WriteTimeout = utils.NullableInt64(service.GetWriteTimeout())
 
 	if resp.Diagnostics.HasError() {
 		return

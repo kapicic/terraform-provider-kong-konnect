@@ -10,8 +10,22 @@ func (c *CreateApiProductDto) SetName(name string) {
 	c.Name = &name
 }
 
+func (c *CreateApiProductDto) GetName() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Name
+}
+
 func (c *CreateApiProductDto) SetDescription(description string) {
 	c.Description = &description
+}
+
+func (c *CreateApiProductDto) GetDescription() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Description
 }
 
 func (c *CreateApiProductDto) SetLabels(labels ApiProductLabels) {
@@ -19,7 +33,7 @@ func (c *CreateApiProductDto) SetLabels(labels ApiProductLabels) {
 }
 
 func (c *CreateApiProductDto) GetLabels() *ApiProductLabels {
-	if c.Labels == nil {
+	if c == nil {
 		return nil
 	}
 	return c.Labels

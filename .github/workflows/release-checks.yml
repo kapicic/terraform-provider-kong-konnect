@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -41,7 +44,7 @@ jobs:
       # - name: Run Acceptance Tests
       #   run: make acceptance-test
 
-  publish:
+  release:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
@@ -68,13 +71,6 @@ jobs:
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 
-      - name: Build Release Binary
-        run: |
-          GOOS=linux GOARCH=amd64 go build -o terraform-provider-kong
-          zip terraform-provider-kong_${{ steps.release_tag.outputs.tag }}_linux_amd64.zip terraform-provider-kong
-        env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -86,13 +82,31 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # Allow goreleaser to access older tag information.
+          fetch-depth: 0
+      - uses: actions/setup-go@v2
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        id: import_gpg
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
         env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          args: release --clean
+        env:
+          # GitHub sets the GITHUB_TOKEN secret automatically.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./terraform-provider-kong_${{ steps.release_tag.outputs.tag }}_linux_amd64.zip
-          asset_name: terraform-provider-kong_${{ steps.release_tag.outputs.tag }}_linux_amd64.zip
-          asset_content_type: application/zip

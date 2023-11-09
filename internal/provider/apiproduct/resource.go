@@ -30,13 +30,13 @@ type ApiProductResource struct {
 }
 
 type ApiProductResourceModel struct {
+	Id          types.String                         `tfsdk:"id"`
 	Name        types.String                         `tfsdk:"name"`
 	Description types.String                         `tfsdk:"description"`
-	Labels      *api_product_labels.ApiProductLabels `tfsdk:"labels"`
 	PortalIds   types.List                           `tfsdk:"portal_ids"`
-	Id          types.String                         `tfsdk:"id"`
 	CreatedAt   types.String                         `tfsdk:"created_at"`
 	UpdatedAt   types.String                         `tfsdk:"updated_at"`
+	Labels      *api_product_labels.ApiProductLabels `tfsdk:"labels"`
 }
 
 func (r *ApiProductResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -46,13 +46,39 @@ func (r *ApiProductResource) Metadata(_ context.Context, req resource.MetadataRe
 func (r *ApiProductResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The API product ID.",
+				Computed:    true,
+				Optional:    true,
+			},
+
 			"name": schema.StringAttribute{
-				Description: "The name of the API product.",
+				Description: "The name of the API product",
 				Required:    true,
 			},
 
 			"description": schema.StringAttribute{
-				Description: "The description of the API product.",
+				Description: "The description of the API product",
+				Optional:    true,
+			},
+
+			"portal_ids": schema.ListAttribute{
+				Description: "The list of portal identifiers which this API product is published to",
+				Computed:    true,
+				Optional:    true,
+
+				ElementType: types.StringType,
+			},
+
+			"created_at": schema.StringAttribute{
+				Description: "An ISO-8601 timestamp representation of entity creation date.",
+				Computed:    true,
+				Optional:    true,
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description: "An ISO-8601 timestamp representation of entity update date.",
+				Computed:    true,
 				Optional:    true,
 			},
 
@@ -66,32 +92,6 @@ func (r *ApiProductResource) Schema(_ context.Context, req resource.SchemaReques
 						Optional:    true,
 					},
 				},
-			},
-
-			"portal_ids": schema.ListAttribute{
-				Description: "The list of portal identifiers which this API product should be published to",
-				Computed:    true,
-				Optional:    true,
-
-				ElementType: types.StringType,
-			},
-
-			"id": schema.StringAttribute{
-				Description: "API product identifier",
-				Computed:    true,
-				Optional:    true,
-			},
-
-			"created_at": schema.StringAttribute{
-				Description: "An ISO-8601 timestamp representation of entity creation date.",
-				Computed:    true,
-				Optional:    true,
-			},
-
-			"updated_at": schema.StringAttribute{
-				Description: "An ISO-8601 timestamp representation of entity update date.",
-				Computed:    true,
-				Optional:    true,
 			},
 		},
 	}
@@ -118,8 +118,7 @@ func (r *ApiProductResource) Configure(ctx context.Context, req resource.Configu
 
 func (r *ApiProductResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ApiProductResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -140,11 +139,11 @@ func (r *ApiProductResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	data.Id = utils.NullableString(apiProduct.Id)
+	data.Id = utils.NullableString(apiProduct.GetId())
 
-	data.Name = utils.NullableString(apiProduct.Name)
+	data.Name = utils.NullableString(apiProduct.GetName())
 
-	data.Description = utils.NullableString(apiProduct.Description)
+	data.Description = utils.NullableString(apiProduct.GetDescription())
 
 	var PortalIdsDiags diag.Diagnostics
 
@@ -153,13 +152,15 @@ func (r *ApiProductResource) Read(ctx context.Context, req resource.ReadRequest,
 		resp.Diagnostics.Append(PortalIdsDiags...)
 	}
 
-	data.CreatedAt = utils.NullableString(apiProduct.CreatedAt)
+	data.CreatedAt = utils.NullableString(apiProduct.GetCreatedAt())
 
-	data.UpdatedAt = utils.NullableString(apiProduct.UpdatedAt)
+	data.UpdatedAt = utils.NullableString(apiProduct.GetUpdatedAt())
 
-	data.Labels = utils.NullableObject(apiProduct.Labels, api_product_labels.ApiProductLabels{
-		Name: utils.NullableString(apiProduct.Labels.Name),
-	})
+	if apiProduct.Labels != nil {
+		data.Labels = utils.NullableObject(apiProduct.Labels, api_product_labels.ApiProductLabels{
+			Name: utils.NullableString(apiProduct.GetLabels().GetName()),
+		})
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -170,8 +171,7 @@ func (r *ApiProductResource) Read(ctx context.Context, req resource.ReadRequest,
 
 func (r *ApiProductResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data ApiProductResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -182,9 +182,12 @@ func (r *ApiProductResource) Create(ctx context.Context, req resource.CreateRequ
 	createRequest := apiproducts.CreateApiProductDto{
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
-		Labels: &apiproducts.ApiProductLabels{
-			Name: data.Labels.Name.ValueStringPointer(),
-		},
+
+		Labels: utils.NullableTfStateObject(data.Labels, func(from *api_product_labels.ApiProductLabels) apiproducts.ApiProductLabels {
+			return apiproducts.ApiProductLabels{
+				Name: from.Name.ValueStringPointer(),
+			}
+		}),
 	}
 
 	apiProduct, err := r.client.ApiProducts.CreateApiProduct(createRequest, requestOptions)
@@ -198,11 +201,11 @@ func (r *ApiProductResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	data.Id = utils.NullableString(apiProduct.Id)
+	data.Id = utils.NullableString(apiProduct.GetId())
 
-	data.Name = utils.NullableString(apiProduct.Name)
+	data.Name = utils.NullableString(apiProduct.GetName())
 
-	data.Description = utils.NullableString(apiProduct.Description)
+	data.Description = utils.NullableString(apiProduct.GetDescription())
 
 	var PortalIdsDiags diag.Diagnostics
 
@@ -211,13 +214,15 @@ func (r *ApiProductResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.Append(PortalIdsDiags...)
 	}
 
-	data.CreatedAt = utils.NullableString(apiProduct.CreatedAt)
+	data.CreatedAt = utils.NullableString(apiProduct.GetCreatedAt())
 
-	data.UpdatedAt = utils.NullableString(apiProduct.UpdatedAt)
+	data.UpdatedAt = utils.NullableString(apiProduct.GetUpdatedAt())
 
-	data.Labels = utils.NullableObject(apiProduct.Labels, api_product_labels.ApiProductLabels{
-		Name: utils.NullableString(apiProduct.Labels.Name),
-	})
+	if apiProduct.Labels != nil {
+		data.Labels = utils.NullableObject(apiProduct.Labels, api_product_labels.ApiProductLabels{
+			Name: utils.NullableString(apiProduct.GetLabels().GetName()),
+		})
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -228,8 +233,7 @@ func (r *ApiProductResource) Create(ctx context.Context, req resource.CreateRequ
 
 func (r *ApiProductResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data = &ApiProductResourceModel{}
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -250,10 +254,8 @@ func (r *ApiProductResource) Delete(ctx context.Context, req resource.DeleteRequ
 }
 
 func (r *ApiProductResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-
 	var data = &ApiProductResourceModel{}
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -266,9 +268,12 @@ func (r *ApiProductResource) Update(ctx context.Context, req resource.UpdateRequ
 	updateRequest := apiproducts.UpdateApiProductDto{
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
-		Labels: &apiproducts.ApiProductLabels{
-			Name: data.Labels.Name.ValueStringPointer(),
-		},
+
+		Labels: utils.NullableTfStateObject(data.Labels, func(from *api_product_labels.ApiProductLabels) apiproducts.ApiProductLabels {
+			return apiproducts.ApiProductLabels{
+				Name: from.Name.ValueStringPointer(),
+			}
+		}),
 		PortalIds: utils.FromListToPrimitiveSlice[string](ctx, data.PortalIds, types.StringType, &resp.Diagnostics),
 	}
 
@@ -283,11 +288,11 @@ func (r *ApiProductResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	data.Id = utils.NullableString(apiProduct.Id)
+	data.Id = utils.NullableString(apiProduct.GetId())
 
-	data.Name = utils.NullableString(apiProduct.Name)
+	data.Name = utils.NullableString(apiProduct.GetName())
 
-	data.Description = utils.NullableString(apiProduct.Description)
+	data.Description = utils.NullableString(apiProduct.GetDescription())
 
 	var PortalIdsDiags diag.Diagnostics
 
@@ -296,13 +301,15 @@ func (r *ApiProductResource) Update(ctx context.Context, req resource.UpdateRequ
 		resp.Diagnostics.Append(PortalIdsDiags...)
 	}
 
-	data.CreatedAt = utils.NullableString(apiProduct.CreatedAt)
+	data.CreatedAt = utils.NullableString(apiProduct.GetCreatedAt())
 
-	data.UpdatedAt = utils.NullableString(apiProduct.UpdatedAt)
+	data.UpdatedAt = utils.NullableString(apiProduct.GetUpdatedAt())
 
-	data.Labels = utils.NullableObject(apiProduct.Labels, api_product_labels.ApiProductLabels{
-		Name: utils.NullableString(apiProduct.Labels.Name),
-	})
+	if apiProduct.Labels != nil {
+		data.Labels = utils.NullableObject(apiProduct.Labels, api_product_labels.ApiProductLabels{
+			Name: utils.NullableString(apiProduct.GetLabels().GetName()),
+		})
+	}
 
 	if resp.Diagnostics.HasError() {
 		return

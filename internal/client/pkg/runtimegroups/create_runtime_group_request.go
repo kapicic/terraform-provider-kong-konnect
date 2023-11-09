@@ -12,16 +12,44 @@ func (c *CreateRuntimeGroupRequest) SetName(name string) {
 	c.Name = &name
 }
 
+func (c *CreateRuntimeGroupRequest) GetName() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Name
+}
+
 func (c *CreateRuntimeGroupRequest) SetDescription(description string) {
 	c.Description = &description
+}
+
+func (c *CreateRuntimeGroupRequest) GetDescription() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Description
 }
 
 func (c *CreateRuntimeGroupRequest) SetClusterType(clusterType ClusterType) {
 	c.ClusterType = &clusterType
 }
 
+func (c *CreateRuntimeGroupRequest) GetClusterType() *ClusterType {
+	if c == nil {
+		return nil
+	}
+	return c.ClusterType
+}
+
 func (c *CreateRuntimeGroupRequest) SetAuthType(authType AuthType) {
 	c.AuthType = &authType
+}
+
+func (c *CreateRuntimeGroupRequest) GetAuthType() *AuthType {
+	if c == nil {
+		return nil
+	}
+	return c.AuthType
 }
 
 func (c *CreateRuntimeGroupRequest) SetLabels(labels Labels) {
@@ -29,7 +57,7 @@ func (c *CreateRuntimeGroupRequest) SetLabels(labels Labels) {
 }
 
 func (c *CreateRuntimeGroupRequest) GetLabels() *Labels {
-	if c.Labels == nil {
+	if c == nil {
 		return nil
 	}
 	return c.Labels

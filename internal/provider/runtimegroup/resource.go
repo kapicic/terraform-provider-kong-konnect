@@ -30,15 +30,15 @@ type RunTimeGroupResource struct {
 }
 
 type RunTimeGroupResourceModel struct {
+	Id          types.String   `tfsdk:"id"`
 	Name        types.String   `tfsdk:"name"`
 	Description types.String   `tfsdk:"description"`
-	ClusterType types.String   `tfsdk:"cluster_type"`
-	AuthType    types.String   `tfsdk:"auth_type"`
 	Labels      *labels.Labels `tfsdk:"labels"`
-	Id          types.String   `tfsdk:"id"`
 	Config      *config.Config `tfsdk:"config"`
 	CreatedAt   types.String   `tfsdk:"created_at"`
 	UpdatedAt   types.String   `tfsdk:"updated_at"`
+	ClusterType types.String   `tfsdk:"cluster_type"`
+	AuthType    types.String   `tfsdk:"auth_type"`
 }
 
 func (r *RunTimeGroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -48,6 +48,12 @@ func (r *RunTimeGroupResource) Metadata(_ context.Context, req resource.Metadata
 func (r *RunTimeGroupResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The runtime group ID.",
+				Computed:    true,
+				Optional:    true,
+			},
+
 			"name": schema.StringAttribute{
 				Description: "The name of the runtime group.",
 				Required:    true,
@@ -55,16 +61,6 @@ func (r *RunTimeGroupResource) Schema(_ context.Context, req resource.SchemaRequ
 
 			"description": schema.StringAttribute{
 				Description: "The description of the runtime group in Konnect.",
-				Optional:    true,
-			},
-
-			"cluster_type": schema.StringAttribute{
-				Description: "The ClusterType value of the cluster associated with the Runtime Group.",
-				Optional:    true,
-			},
-
-			"auth_type": schema.StringAttribute{
-				Description: "The auth type value of the cluster associated with the Runtime Group.",
 				Optional:    true,
 			},
 
@@ -78,12 +74,6 @@ func (r *RunTimeGroupResource) Schema(_ context.Context, req resource.SchemaRequ
 						Optional:    true,
 					},
 				},
-			},
-
-			"id": schema.StringAttribute{
-				Description: "The runtime group ID",
-				Computed:    true,
-				Optional:    true,
 			},
 
 			"config": schema.SingleNestedAttribute{
@@ -115,6 +105,16 @@ func (r *RunTimeGroupResource) Schema(_ context.Context, req resource.SchemaRequ
 				Computed:    true,
 				Optional:    true,
 			},
+
+			"cluster_type": schema.StringAttribute{
+				Description: "The ClusterType value of the cluster associated with the Runtime Group.",
+				Optional:    true,
+			},
+
+			"auth_type": schema.StringAttribute{
+				Description: "The auth type value of the cluster associated with the Runtime Group.",
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -140,8 +140,7 @@ func (r *RunTimeGroupResource) Configure(ctx context.Context, req resource.Confi
 
 func (r *RunTimeGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data RunTimeGroupResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -162,25 +161,29 @@ func (r *RunTimeGroupResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	data.Id = utils.NullableString(runTimeGroup.Id)
+	data.Id = utils.NullableString(runTimeGroup.GetId())
 
-	data.Name = utils.NullableString(runTimeGroup.Name)
+	data.Name = utils.NullableString(runTimeGroup.GetName())
 
-	data.Description = utils.NullableString(runTimeGroup.Description)
+	data.Description = utils.NullableString(runTimeGroup.GetDescription())
 
-	data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
-		Name: utils.NullableString(runTimeGroup.Labels.Name),
-	})
+	if runTimeGroup.Labels != nil {
+		data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
+			Name: utils.NullableString(runTimeGroup.GetLabels().GetName()),
+		})
+	}
 
-	data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
-		ControlPlaneEndpoint: utils.NullableString(runTimeGroup.Config.ControlPlaneEndpoint),
+	if runTimeGroup.Config != nil {
+		data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
+			ControlPlaneEndpoint: utils.NullableString(runTimeGroup.GetConfig().GetControlPlaneEndpoint()),
 
-		TelemetryEndpoint: utils.NullableString(runTimeGroup.Config.TelemetryEndpoint),
-	})
+			TelemetryEndpoint: utils.NullableString(runTimeGroup.GetConfig().GetTelemetryEndpoint()),
+		})
+	}
 
-	data.CreatedAt = utils.NullableString(runTimeGroup.CreatedAt)
+	data.CreatedAt = utils.NullableString(runTimeGroup.GetCreatedAt())
 
-	data.UpdatedAt = utils.NullableString(runTimeGroup.UpdatedAt)
+	data.UpdatedAt = utils.NullableString(runTimeGroup.GetUpdatedAt())
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -191,8 +194,7 @@ func (r *RunTimeGroupResource) Read(ctx context.Context, req resource.ReadReques
 
 func (r *RunTimeGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data RunTimeGroupResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -205,9 +207,12 @@ func (r *RunTimeGroupResource) Create(ctx context.Context, req resource.CreateRe
 		Description: data.Description.ValueStringPointer(),
 		ClusterType: utils.Pointer(runtimegroups.ClusterType(data.ClusterType.ValueString())),
 		AuthType:    utils.Pointer(runtimegroups.AuthType(data.AuthType.ValueString())),
-		Labels: &runtimegroups.Labels{
-			Name: data.Labels.Name.ValueStringPointer(),
-		},
+
+		Labels: utils.NullableTfStateObject(data.Labels, func(from *labels.Labels) runtimegroups.Labels {
+			return runtimegroups.Labels{
+				Name: from.Name.ValueStringPointer(),
+			}
+		}),
 	}
 
 	runTimeGroup, err := r.client.RuntimeGroups.CreateRuntimeGroup(createRequest, requestOptions)
@@ -221,25 +226,29 @@ func (r *RunTimeGroupResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	data.Id = utils.NullableString(runTimeGroup.Id)
+	data.Id = utils.NullableString(runTimeGroup.GetId())
 
-	data.Name = utils.NullableString(runTimeGroup.Name)
+	data.Name = utils.NullableString(runTimeGroup.GetName())
 
-	data.Description = utils.NullableString(runTimeGroup.Description)
+	data.Description = utils.NullableString(runTimeGroup.GetDescription())
 
-	data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
-		Name: utils.NullableString(runTimeGroup.Labels.Name),
-	})
+	if runTimeGroup.Labels != nil {
+		data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
+			Name: utils.NullableString(runTimeGroup.GetLabels().GetName()),
+		})
+	}
 
-	data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
-		ControlPlaneEndpoint: utils.NullableString(runTimeGroup.Config.ControlPlaneEndpoint),
+	if runTimeGroup.Config != nil {
+		data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
+			ControlPlaneEndpoint: utils.NullableString(runTimeGroup.GetConfig().GetControlPlaneEndpoint()),
 
-		TelemetryEndpoint: utils.NullableString(runTimeGroup.Config.TelemetryEndpoint),
-	})
+			TelemetryEndpoint: utils.NullableString(runTimeGroup.GetConfig().GetTelemetryEndpoint()),
+		})
+	}
 
-	data.CreatedAt = utils.NullableString(runTimeGroup.CreatedAt)
+	data.CreatedAt = utils.NullableString(runTimeGroup.GetCreatedAt())
 
-	data.UpdatedAt = utils.NullableString(runTimeGroup.UpdatedAt)
+	data.UpdatedAt = utils.NullableString(runTimeGroup.GetUpdatedAt())
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -250,8 +259,7 @@ func (r *RunTimeGroupResource) Create(ctx context.Context, req resource.CreateRe
 
 func (r *RunTimeGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data = &RunTimeGroupResourceModel{}
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -272,10 +280,8 @@ func (r *RunTimeGroupResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 func (r *RunTimeGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-
 	var data = &RunTimeGroupResourceModel{}
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -289,9 +295,12 @@ func (r *RunTimeGroupResource) Update(ctx context.Context, req resource.UpdateRe
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
 		AuthType:    utils.Pointer(runtimegroups.AuthType1(data.AuthType.ValueString())),
-		Labels: &runtimegroups.Labels{
-			Name: data.Labels.Name.ValueStringPointer(),
-		},
+
+		Labels: utils.NullableTfStateObject(data.Labels, func(from *labels.Labels) runtimegroups.Labels {
+			return runtimegroups.Labels{
+				Name: from.Name.ValueStringPointer(),
+			}
+		}),
 	}
 
 	runTimeGroup, err := r.client.RuntimeGroups.UpdateRuntimeGroup(Id, updateRequest, requestOptions)
@@ -305,25 +314,29 @@ func (r *RunTimeGroupResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	data.Id = utils.NullableString(runTimeGroup.Id)
+	data.Id = utils.NullableString(runTimeGroup.GetId())
 
-	data.Name = utils.NullableString(runTimeGroup.Name)
+	data.Name = utils.NullableString(runTimeGroup.GetName())
 
-	data.Description = utils.NullableString(runTimeGroup.Description)
+	data.Description = utils.NullableString(runTimeGroup.GetDescription())
 
-	data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
-		Name: utils.NullableString(runTimeGroup.Labels.Name),
-	})
+	if runTimeGroup.Labels != nil {
+		data.Labels = utils.NullableObject(runTimeGroup.Labels, labels.Labels{
+			Name: utils.NullableString(runTimeGroup.GetLabels().GetName()),
+		})
+	}
 
-	data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
-		ControlPlaneEndpoint: utils.NullableString(runTimeGroup.Config.ControlPlaneEndpoint),
+	if runTimeGroup.Config != nil {
+		data.Config = utils.NullableObject(runTimeGroup.Config, config.Config{
+			ControlPlaneEndpoint: utils.NullableString(runTimeGroup.GetConfig().GetControlPlaneEndpoint()),
 
-		TelemetryEndpoint: utils.NullableString(runTimeGroup.Config.TelemetryEndpoint),
-	})
+			TelemetryEndpoint: utils.NullableString(runTimeGroup.GetConfig().GetTelemetryEndpoint()),
+		})
+	}
 
-	data.CreatedAt = utils.NullableString(runTimeGroup.CreatedAt)
+	data.CreatedAt = utils.NullableString(runTimeGroup.GetCreatedAt())
 
-	data.UpdatedAt = utils.NullableString(runTimeGroup.UpdatedAt)
+	data.UpdatedAt = utils.NullableString(runTimeGroup.GetUpdatedAt())
 
 	if resp.Diagnostics.HasError() {
 		return

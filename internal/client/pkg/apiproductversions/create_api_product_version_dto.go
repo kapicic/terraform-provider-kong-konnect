@@ -11,12 +11,33 @@ func (c *CreateApiProductVersionDto) SetName(name string) {
 	c.Name = &name
 }
 
+func (c *CreateApiProductVersionDto) GetName() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Name
+}
+
 func (c *CreateApiProductVersionDto) SetPublishStatus(publishStatus PublishStatus) {
 	c.PublishStatus = &publishStatus
 }
 
+func (c *CreateApiProductVersionDto) GetPublishStatus() *PublishStatus {
+	if c == nil {
+		return nil
+	}
+	return c.PublishStatus
+}
+
 func (c *CreateApiProductVersionDto) SetDeprecated(deprecated bool) {
 	c.Deprecated = &deprecated
+}
+
+func (c *CreateApiProductVersionDto) GetDeprecated() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.Deprecated
 }
 
 func (c *CreateApiProductVersionDto) SetGatewayService(gatewayService GatewayServicePayload) {
@@ -24,7 +45,7 @@ func (c *CreateApiProductVersionDto) SetGatewayService(gatewayService GatewaySer
 }
 
 func (c *CreateApiProductVersionDto) GetGatewayService() *GatewayServicePayload {
-	if c.GatewayService == nil {
+	if c == nil {
 		return nil
 	}
 	return c.GatewayService

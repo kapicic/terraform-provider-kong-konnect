@@ -217,8 +217,7 @@ func (r *RouteResource) Configure(ctx context.Context, req resource.ConfigureReq
 
 func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data RouteResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -240,11 +239,13 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	data.CreatedAt = utils.NullableInt64(route.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(route.GetCreatedAt())
 
-	data.Headers = utils.NullableObject(route.Headers, headers.Headers{
-		Key: utils.NullableString(route.Headers.Key),
-	})
+	if route.Headers != nil {
+		data.Headers = utils.NullableObject(route.Headers, headers.Headers{
+			Key: utils.NullableString(route.GetHeaders().GetKey()),
+		})
+	}
 
 	var HostsDiags diag.Diagnostics
 
@@ -253,9 +254,9 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		resp.Diagnostics.Append(HostsDiags...)
 	}
 
-	data.HttpsRedirectStatusCode = utils.NullableInt64(route.HttpsRedirectStatusCode)
+	data.HttpsRedirectStatusCode = utils.NullableInt64(route.GetHttpsRedirectStatusCode())
 
-	data.Id = utils.NullableString(route.Id)
+	data.Id = utils.NullableString(route.GetId())
 
 	var MethodsDiags diag.Diagnostics
 
@@ -264,9 +265,9 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		resp.Diagnostics.Append(MethodsDiags...)
 	}
 
-	data.Name = utils.NullableString(route.Name)
+	data.Name = utils.NullableString(route.GetName())
 
-	data.PathHandling = utils.NullableString(route.PathHandling)
+	data.PathHandling = utils.NullableString(route.GetPathHandling())
 
 	var PathsDiags diag.Diagnostics
 
@@ -275,7 +276,7 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		resp.Diagnostics.Append(PathsDiags...)
 	}
 
-	data.PreserveHost = utils.NullableBool(route.PreserveHost)
+	data.PreserveHost = utils.NullableBool(route.GetPreserveHost())
 
 	var ProtocolsDiags diag.Diagnostics
 
@@ -284,15 +285,17 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		resp.Diagnostics.Append(ProtocolsDiags...)
 	}
 
-	data.RegexPriority = utils.NullableInt64(route.RegexPriority)
+	data.RegexPriority = utils.NullableInt64(route.GetRegexPriority())
 
-	data.RequestBuffering = utils.NullableBool(route.RequestBuffering)
+	data.RequestBuffering = utils.NullableBool(route.GetRequestBuffering())
 
-	data.ResponseBuffering = utils.NullableBool(route.ResponseBuffering)
+	data.ResponseBuffering = utils.NullableBool(route.GetResponseBuffering())
 
-	data.Service = utils.NullableObject(route.Service, service.Service{
-		Id: utils.NullableString(route.Service.Id),
-	})
+	if route.Service != nil {
+		data.Service = utils.NullableObject(route.Service, service.Service{
+			Id: utils.NullableString(route.GetService().GetId()),
+		})
+	}
 
 	var SnisDiags diag.Diagnostics
 
@@ -301,7 +304,7 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		resp.Diagnostics.Append(SnisDiags...)
 	}
 
-	data.StripPath = utils.NullableBool(route.StripPath)
+	data.StripPath = utils.NullableBool(route.GetStripPath())
 
 	var TagsDiags diag.Diagnostics
 
@@ -310,7 +313,7 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		resp.Diagnostics.Append(TagsDiags...)
 	}
 
-	data.UpdatedAt = utils.NullableInt64(route.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(route.GetUpdatedAt())
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -321,8 +324,7 @@ func (r *RouteResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data RouteResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -334,9 +336,12 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	createRequest := routes.Route{
 		CreatedAt: data.CreatedAt.ValueInt64Pointer(),
-		Headers: &routes.Headers{
-			Key: data.Headers.Key.ValueStringPointer(),
-		},
+
+		Headers: utils.NullableTfStateObject(data.Headers, func(from *headers.Headers) routes.Headers {
+			return routes.Headers{
+				Key: from.Key.ValueStringPointer(),
+			}
+		}),
 		Hosts:                   utils.FromListToPrimitiveSlice[string](ctx, data.Hosts, types.StringType, &resp.Diagnostics),
 		HttpsRedirectStatusCode: data.HttpsRedirectStatusCode.ValueInt64Pointer(),
 		Id:                      data.Id.ValueStringPointer(),
@@ -349,9 +354,12 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		RegexPriority:           data.RegexPriority.ValueInt64Pointer(),
 		RequestBuffering:        data.RequestBuffering.ValueBoolPointer(),
 		ResponseBuffering:       data.ResponseBuffering.ValueBoolPointer(),
-		Service: &routes.Service{
-			Id: data.Service.Id.ValueStringPointer(),
-		},
+
+		Service: utils.NullableTfStateObject(data.Service, func(from *service.Service) routes.Service {
+			return routes.Service{
+				Id: from.Id.ValueStringPointer(),
+			}
+		}),
 		Snis:      utils.FromListToPrimitiveSlice[string](ctx, data.Snis, types.StringType, &resp.Diagnostics),
 		StripPath: data.StripPath.ValueBoolPointer(),
 		Tags:      utils.FromListToPrimitiveSlice[string](ctx, data.Tags, types.StringType, &resp.Diagnostics),
@@ -369,11 +377,13 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	data.CreatedAt = utils.NullableInt64(route.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(route.GetCreatedAt())
 
-	data.Headers = utils.NullableObject(route.Headers, headers.Headers{
-		Key: utils.NullableString(route.Headers.Key),
-	})
+	if route.Headers != nil {
+		data.Headers = utils.NullableObject(route.Headers, headers.Headers{
+			Key: utils.NullableString(route.GetHeaders().GetKey()),
+		})
+	}
 
 	var HostsDiags diag.Diagnostics
 
@@ -382,9 +392,9 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.Append(HostsDiags...)
 	}
 
-	data.HttpsRedirectStatusCode = utils.NullableInt64(route.HttpsRedirectStatusCode)
+	data.HttpsRedirectStatusCode = utils.NullableInt64(route.GetHttpsRedirectStatusCode())
 
-	data.Id = utils.NullableString(route.Id)
+	data.Id = utils.NullableString(route.GetId())
 
 	var MethodsDiags diag.Diagnostics
 
@@ -393,9 +403,9 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.Append(MethodsDiags...)
 	}
 
-	data.Name = utils.NullableString(route.Name)
+	data.Name = utils.NullableString(route.GetName())
 
-	data.PathHandling = utils.NullableString(route.PathHandling)
+	data.PathHandling = utils.NullableString(route.GetPathHandling())
 
 	var PathsDiags diag.Diagnostics
 
@@ -404,7 +414,7 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.Append(PathsDiags...)
 	}
 
-	data.PreserveHost = utils.NullableBool(route.PreserveHost)
+	data.PreserveHost = utils.NullableBool(route.GetPreserveHost())
 
 	var ProtocolsDiags diag.Diagnostics
 
@@ -413,15 +423,17 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.Append(ProtocolsDiags...)
 	}
 
-	data.RegexPriority = utils.NullableInt64(route.RegexPriority)
+	data.RegexPriority = utils.NullableInt64(route.GetRegexPriority())
 
-	data.RequestBuffering = utils.NullableBool(route.RequestBuffering)
+	data.RequestBuffering = utils.NullableBool(route.GetRequestBuffering())
 
-	data.ResponseBuffering = utils.NullableBool(route.ResponseBuffering)
+	data.ResponseBuffering = utils.NullableBool(route.GetResponseBuffering())
 
-	data.Service = utils.NullableObject(route.Service, service.Service{
-		Id: utils.NullableString(route.Service.Id),
-	})
+	if route.Service != nil {
+		data.Service = utils.NullableObject(route.Service, service.Service{
+			Id: utils.NullableString(route.GetService().GetId()),
+		})
+	}
 
 	var SnisDiags diag.Diagnostics
 
@@ -430,7 +442,7 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.Append(SnisDiags...)
 	}
 
-	data.StripPath = utils.NullableBool(route.StripPath)
+	data.StripPath = utils.NullableBool(route.GetStripPath())
 
 	var TagsDiags diag.Diagnostics
 
@@ -439,7 +451,7 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.Append(TagsDiags...)
 	}
 
-	data.UpdatedAt = utils.NullableInt64(route.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(route.GetUpdatedAt())
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -450,8 +462,7 @@ func (r *RouteResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 func (r *RouteResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data = &RouteResourceModel{}
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.State.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -473,10 +484,8 @@ func (r *RouteResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 }
 
 func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-
 	var data = &RouteResourceModel{}
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	utils.PopulateModelData(ctx, &data, resp.Diagnostics, req.Plan.Get)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -489,9 +498,12 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	updateRequest := routes.Route{
 		CreatedAt: data.CreatedAt.ValueInt64Pointer(),
-		Headers: &routes.Headers{
-			Key: data.Headers.Key.ValueStringPointer(),
-		},
+
+		Headers: utils.NullableTfStateObject(data.Headers, func(from *headers.Headers) routes.Headers {
+			return routes.Headers{
+				Key: from.Key.ValueStringPointer(),
+			}
+		}),
 		Hosts:                   utils.FromListToPrimitiveSlice[string](ctx, data.Hosts, types.StringType, &resp.Diagnostics),
 		HttpsRedirectStatusCode: data.HttpsRedirectStatusCode.ValueInt64Pointer(),
 		Id:                      data.Id.ValueStringPointer(),
@@ -504,9 +516,12 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		RegexPriority:           data.RegexPriority.ValueInt64Pointer(),
 		RequestBuffering:        data.RequestBuffering.ValueBoolPointer(),
 		ResponseBuffering:       data.ResponseBuffering.ValueBoolPointer(),
-		Service: &routes.Service{
-			Id: data.Service.Id.ValueStringPointer(),
-		},
+
+		Service: utils.NullableTfStateObject(data.Service, func(from *service.Service) routes.Service {
+			return routes.Service{
+				Id: from.Id.ValueStringPointer(),
+			}
+		}),
 		Snis:      utils.FromListToPrimitiveSlice[string](ctx, data.Snis, types.StringType, &resp.Diagnostics),
 		StripPath: data.StripPath.ValueBoolPointer(),
 		Tags:      utils.FromListToPrimitiveSlice[string](ctx, data.Tags, types.StringType, &resp.Diagnostics),
@@ -524,11 +539,13 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	data.CreatedAt = utils.NullableInt64(route.CreatedAt)
+	data.CreatedAt = utils.NullableInt64(route.GetCreatedAt())
 
-	data.Headers = utils.NullableObject(route.Headers, headers.Headers{
-		Key: utils.NullableString(route.Headers.Key),
-	})
+	if route.Headers != nil {
+		data.Headers = utils.NullableObject(route.Headers, headers.Headers{
+			Key: utils.NullableString(route.GetHeaders().GetKey()),
+		})
+	}
 
 	var HostsDiags diag.Diagnostics
 
@@ -537,9 +554,9 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		resp.Diagnostics.Append(HostsDiags...)
 	}
 
-	data.HttpsRedirectStatusCode = utils.NullableInt64(route.HttpsRedirectStatusCode)
+	data.HttpsRedirectStatusCode = utils.NullableInt64(route.GetHttpsRedirectStatusCode())
 
-	data.Id = utils.NullableString(route.Id)
+	data.Id = utils.NullableString(route.GetId())
 
 	var MethodsDiags diag.Diagnostics
 
@@ -548,9 +565,9 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		resp.Diagnostics.Append(MethodsDiags...)
 	}
 
-	data.Name = utils.NullableString(route.Name)
+	data.Name = utils.NullableString(route.GetName())
 
-	data.PathHandling = utils.NullableString(route.PathHandling)
+	data.PathHandling = utils.NullableString(route.GetPathHandling())
 
 	var PathsDiags diag.Diagnostics
 
@@ -559,7 +576,7 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		resp.Diagnostics.Append(PathsDiags...)
 	}
 
-	data.PreserveHost = utils.NullableBool(route.PreserveHost)
+	data.PreserveHost = utils.NullableBool(route.GetPreserveHost())
 
 	var ProtocolsDiags diag.Diagnostics
 
@@ -568,15 +585,17 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		resp.Diagnostics.Append(ProtocolsDiags...)
 	}
 
-	data.RegexPriority = utils.NullableInt64(route.RegexPriority)
+	data.RegexPriority = utils.NullableInt64(route.GetRegexPriority())
 
-	data.RequestBuffering = utils.NullableBool(route.RequestBuffering)
+	data.RequestBuffering = utils.NullableBool(route.GetRequestBuffering())
 
-	data.ResponseBuffering = utils.NullableBool(route.ResponseBuffering)
+	data.ResponseBuffering = utils.NullableBool(route.GetResponseBuffering())
 
-	data.Service = utils.NullableObject(route.Service, service.Service{
-		Id: utils.NullableString(route.Service.Id),
-	})
+	if route.Service != nil {
+		data.Service = utils.NullableObject(route.Service, service.Service{
+			Id: utils.NullableString(route.GetService().GetId()),
+		})
+	}
 
 	var SnisDiags diag.Diagnostics
 
@@ -585,7 +604,7 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		resp.Diagnostics.Append(SnisDiags...)
 	}
 
-	data.StripPath = utils.NullableBool(route.StripPath)
+	data.StripPath = utils.NullableBool(route.GetStripPath())
 
 	var TagsDiags diag.Diagnostics
 
@@ -594,7 +613,7 @@ func (r *RouteResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		resp.Diagnostics.Append(TagsDiags...)
 	}
 
-	data.UpdatedAt = utils.NullableInt64(route.UpdatedAt)
+	data.UpdatedAt = utils.NullableInt64(route.GetUpdatedAt())
 
 	if resp.Diagnostics.HasError() {
 		return

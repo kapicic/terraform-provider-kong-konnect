@@ -17,17 +17,17 @@ description: |-
 
 ### Required
 
-- `name` (String) The version name of the API product version.
+- `name` (String) The version of the API product
 
 ### Optional
 
 - `api_product_id` (String) The API product identifier
 - `created_at` (String) An ISO-8601 timestamp representation of entity creation date.
-- `deprecated` (Boolean) Indicates if the version of the API product is deprecated.
+- `deprecated` (Boolean) Indicates if this API product version is deprecated
 - `gateway_service` (Attributes) gateway_service (see [below for nested schema](#nestedatt--gateway_service))
-- `id` (String) The API product version identifier
+- `id` (String) The API product version identifier.
 - `notify` (Boolean) When set to `true`, and all the following conditions are true:- version of the API product deprecation has changed from `false` -> `true`- version of the API product is publishedthen consumers of the now deprecated verion of the API product will be notified.
-- `publish_status` (String) The publish status of the API product version.
+- `publish_status` (String) The publish status of the API product version
 - `updated_at` (String) An ISO-8601 timestamp representation of entity update date.
 
 <a id="nestedatt--gateway_service"></a>

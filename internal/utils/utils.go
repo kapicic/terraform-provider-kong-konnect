@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 func Pointer[T any](v T) *T {
@@ -33,6 +34,14 @@ func NullableInt64(i *int64) types.Int64 {
 		return types.Int64Value(*i)
 	}
 	return types.Int64Null()
+}
+
+func NullableTfStateObject[T any, R any](source *T, fn func(t *T) R) *R {
+	if source != nil {
+		r := fn(source)
+		return &r
+	}
+	return nil
 }
 
 func NullableObject[T any, R any](source *T, value R) *R {
@@ -84,6 +93,20 @@ func FromListToPrimitiveSlice[T any](ctx context.Context, from types.List, toTyp
 
 	}
 	return &result
+}
+
+// PopulateModelData populates target interface with data from plan, replacing null and unknown with empty
+// planGetterFn is a function which retrieves data from the request Plan, State or Config. Examples: req.State.Get, req.Plan.Get
+// target should be a pointer
+func PopulateModelData(ctx context.Context, target interface{}, diagnostics diag.Diagnostics, planGetterFn func(ctx context.Context, target interface{}) diag.Diagnostics) {
+	var obj types.Object
+
+	diagnostics.Append(planGetterFn(ctx, &obj)...)
+
+	diagnostics.Append(obj.As(ctx, target, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    true,
+		UnhandledUnknownAsEmpty: true,
+	})...)
 }
 
 func getConversionMethodName(t attr.Type) (string, error) {

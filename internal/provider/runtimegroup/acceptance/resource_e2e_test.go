@@ -40,14 +40,14 @@ resource "kong_run_time_group" "example" {
 
     description = "description"
 
-    cluster_type = "cluster_type"
-
-    auth_type = "auth_type"
-
     labels = {
                 name = "name"
 }
 
+
+    cluster_type = "cluster_type"
+
+    auth_type = "auth_type"
 
 }
 
@@ -56,9 +56,9 @@ resource "kong_run_time_group" "example" {
 					// Extend this based on the model attributes
 					resource.TestCheckResourceAttr("kong_run_time_group.example", "name", "name"),
 					resource.TestCheckResourceAttr("kong_run_time_group.example", "description", "description"),
+					resource.TestCheckResourceAttr("kong_run_time_group.example", "labels.name", "name"),
 					resource.TestCheckResourceAttr("kong_run_time_group.example", "cluster_type", "cluster_type"),
 					resource.TestCheckResourceAttr("kong_run_time_group.example", "auth_type", "auth_type"),
-					resource.TestCheckResourceAttr("kong_run_time_group.example", "labels.name", "name"),
 				),
 			},
 		},

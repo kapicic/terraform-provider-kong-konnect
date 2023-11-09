@@ -3,13 +3,13 @@ resource "kong_run_time_group" "example" {
 
   description = "description"
 
-  cluster_type = "cluster_type"
-
-  auth_type = "auth_type"
-
   labels = {
     name = "name"
   }
 
+
+  cluster_type = "cluster_type"
+
+  auth_type = "auth_type"
 
 }

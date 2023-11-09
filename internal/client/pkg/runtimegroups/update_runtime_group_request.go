@@ -11,12 +11,33 @@ func (u *UpdateRuntimeGroupRequest) SetName(name string) {
 	u.Name = &name
 }
 
+func (u *UpdateRuntimeGroupRequest) GetName() *string {
+	if u == nil {
+		return nil
+	}
+	return u.Name
+}
+
 func (u *UpdateRuntimeGroupRequest) SetDescription(description string) {
 	u.Description = &description
 }
 
+func (u *UpdateRuntimeGroupRequest) GetDescription() *string {
+	if u == nil {
+		return nil
+	}
+	return u.Description
+}
+
 func (u *UpdateRuntimeGroupRequest) SetAuthType(authType AuthType1) {
 	u.AuthType = &authType
+}
+
+func (u *UpdateRuntimeGroupRequest) GetAuthType() *AuthType1 {
+	if u == nil {
+		return nil
+	}
+	return u.AuthType
 }
 
 func (u *UpdateRuntimeGroupRequest) SetLabels(labels Labels) {
@@ -24,7 +45,7 @@ func (u *UpdateRuntimeGroupRequest) SetLabels(labels Labels) {
 }
 
 func (u *UpdateRuntimeGroupRequest) GetLabels() *Labels {
-	if u.Labels == nil {
+	if u == nil {
 		return nil
 	}
 	return u.Labels

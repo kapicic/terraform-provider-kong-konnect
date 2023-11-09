@@ -17,15 +17,15 @@ description: |-
 
 ### Required
 
-- `name` (String) The name of the API product.
+- `name` (String) The name of the API product
 
 ### Optional
 
 - `created_at` (String) An ISO-8601 timestamp representation of entity creation date.
-- `description` (String) The description of the API product.
-- `id` (String) API product identifier
+- `description` (String) The description of the API product
+- `id` (String) The API product ID.
 - `labels` (Attributes) description: A maximum of 5 user-defined labels are allowed on this resource.Keys must not start with kong, konnect, insomnia, mesh, kic or _, which are reserved for Kong.Keys are case-sensitive. (see [below for nested schema](#nestedatt--labels))
-- `portal_ids` (List of String) The list of portal identifiers which this API product should be published to
+- `portal_ids` (List of String) The list of portal identifiers which this API product is published to
 - `updated_at` (String) An ISO-8601 timestamp representation of entity update date.
 
 <a id="nestedatt--labels"></a>
