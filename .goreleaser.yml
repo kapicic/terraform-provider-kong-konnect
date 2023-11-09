@@ -26,9 +26,9 @@ archives:
 
 # Checksum and signing configuration
 checksum:
-  name_template: 'checksums.txt'
+  name_template: 'SHA256SUMS'
+  algorithm: sha256
 
 # Snapshot configuration in case you want to create non-release builds
 snapshot:
   name_template: "{{ .Tag }}-snapshot"
-  
