@@ -36,7 +36,7 @@ func main() {
 
 	opts := providerserver.ServeOpts{
 		// TODO: Update this string with the published name of your provider.
-		Address: "registry.terraform.io/providers/liblaber/kong-konnect/0.1.0-f230dfbb1bbce9fc84282c40c93c8117ed04af07",
+		Address: "registry.terraform.io/liblaber/kong-konnect",
 		Debug:   debug,
 	}
 
